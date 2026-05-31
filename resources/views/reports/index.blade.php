@@ -105,5 +105,7 @@
         {{-- $reportData->appends(request()->query())->links() --}}
     </div>
 </div>
-
+<a href="{{ route('reports.excel', request()->all()) }}" class="bg-green-600 text-white px-3 py-1 rounded">
+    Excel डाउनलोड
+</a>
 @endsection

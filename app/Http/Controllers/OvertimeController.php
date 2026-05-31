@@ -9,6 +9,8 @@ use App\Services\OvertimeCalculator;
 use Exception;
 use App\Models\OvertimeRecord;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\OvertimeExport;
 
 class OvertimeController extends Controller
 {
@@ -139,4 +141,29 @@ class OvertimeController extends Controller
 
         return view('reports.index', compact('groupedData', 'totalHoursDecimalSum', 'totalAmountSum'));
     }
+   public function exportExcel(Request $request) 
+{
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+
+    // फिल्टरहरू (यसमा परिवर्तन नगर्ने)
+    if ($request->filled('employee_id')) { $query->where('employee_id', $request->employee_id); }
+    if ($request->filled('event_id')) { $query->where('event_id', $request->event_id); }
+    if ($request->filled('from_date')) { $query->where('ot_date', '>=', $request->from_date); }
+    if ($request->filled('to_date')) { $query->where('ot_date', '<=', $request->to_date); }
+
+    // १. वेब रिपोर्टमा जस्तै डायनामिक ग्रुपिङ लजिक थप्नुहोस्
+    $groupBy = $request->get('group_by', 'employee'); // पूर्वनिर्धारित 'employee' मानिएको छ
+    $groupColumn = ($groupBy == 'event') ? 'event_id' : 'employee_id';
+    
+    // २. डेटा तान्दा त्यही कलमको आधारमा अर्डर र ग्रुप गर्नुहोस्
+    $data = $query->orderBy($groupColumn)->get()->groupBy($groupColumn);
+    
+    // ३. डेटा खाली भए चेक गर्नुहोस्
+    if ($data->isEmpty()) {
+        return back()->with('error', 'कुनै पनि ओभरटाइम रेकर्ड भेटिएन!');
+    }
+    
+    // ४. एक्सेल डाउनलोड गर्नुहोस्
+    return Excel::download(new OvertimeExport($data), 'OvertimeReport.xlsx');
+}
 }

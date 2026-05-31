@@ -107,6 +107,8 @@
         
     </div>
 </div>
-
+<a href="<?php echo e(route('reports.excel', request()->all())); ?>" class="bg-green-600 text-white px-3 py-1 rounded">
+    Excel डाउनलोड
+</a>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/reports/index.blade.php ENDPATH**/ ?>
