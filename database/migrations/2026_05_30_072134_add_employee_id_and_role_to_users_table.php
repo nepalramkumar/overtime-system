@@ -9,13 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-       Schema::table('users', function (Blueprint $table) {
-    $table->unsignedBigInteger('employee_id')->nullable(); // कर्मचारी लिंक गर्न
-    $table->string('role')->default('employee'); // admin, manager, employee
-});
-    }
+public function up(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        if (!Schema::hasColumn('users', 'employee_id')) {
+            $table->unsignedBigInteger('employee_id')->nullable();
+        }
+        if (!Schema::hasColumn('users', 'role')) {
+            $table->string('role')->default('employee');
+        }
+    });
+}
 
     /**
      * Reverse the migrations.

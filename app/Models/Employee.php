@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Position;
 
 class Employee extends Model
 {
-    use HasFactory, SoftDeletes; // नियम २.१ अनुसार पुरानो डाटा जोगाउन SoftDeletes प्रयोग गरिएको छ
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -17,20 +18,24 @@ class Employee extends Model
         'department',
         'ot_rate',
         'is_active',
-        'user_id' => 0,
+        'employee_code',
+        'external_staff_id',
+        'position_id',
+        'last_synced_at',
     ];
 
-    /**
-     * यो कर्मचारी कुन प्रयोगकर्ता (User) सँग सम्बन्धित छ भनेर जोडिएको सम्बन्ध (Relationship)
-     */
-    
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    public function overtimeRecords()
-{
-    return $this->hasMany(OvertimeRecord::class, 'employee_id');
-}
 
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
+    }
+
+    public function overtimeRecords()
+    {
+        return $this->hasMany(OvertimeRecord::class, 'employee_id');
+    }
 }

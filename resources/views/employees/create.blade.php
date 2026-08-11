@@ -14,8 +14,8 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">पद (Designation)</label>
-                <input type="text" name="designation" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" required placeholder="जस्तै: Senior Developer">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label>
+                <input type="text" name="employee_code" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" required placeholder="जस्तै: EMP001">
             </div>
 
             <div class="mb-4">
@@ -24,8 +24,13 @@
             </div>
 
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">OT रेट (प्रति घण्टा)</label>
-                <input type="number" step="0.01" name="ot_rate" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" required placeholder="0.00">
+                <label class="block text-sm font-medium text-gray-700 mb-1">पद (Position)</label>
+                <select name="position_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" required>
+                    <option value="">-- Position छान्नुहोस् --</option>
+                    @foreach($positions as $position)
+                        <option value="{{ $position->id }}">{{ $position->name }}</option>
+                    @endforeach
+                </select>
             </div>
 
             <div class="mt-6 flex gap-4">

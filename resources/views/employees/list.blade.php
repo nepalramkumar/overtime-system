@@ -26,9 +26,9 @@
                     <td class="px-6 py-4 border font-medium text-gray-900">
     {{ $emp->name ?? ($emp->user->name ?? 'N/A') }}
 </td>
-                    <td class="px-6 py-4 border">{{ $emp->designation }}</td>
+                    <td class="px-6 py-4 border">{{ $emp->position->name ?? '—' }}</td>
                     <td class="px-6 py-4 border">{{ $emp->department }}</td>
-                    <td class="px-6 py-4 border">रू. {{ number_format($emp->ot_rate, 2) }}</td>
+                    <td class="px-6 py-4 border">रू. {{ number_format($emp->position->ot_rate ?? 0, 2) }}
                     <td class="px-6 py-4 border flex gap-2">
                         <a href="{{ route('employees.edit', $emp->id) }}" class="text-blue-600 hover:text-blue-900 font-semibold">Edit</a>
                         <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ?')">

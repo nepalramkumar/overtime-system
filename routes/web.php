@@ -6,6 +6,7 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\MasterSettingsController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\PositionController;
 
 // स्वागत पेज
 Route::get('/', function () {
@@ -68,5 +69,14 @@ Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edi
 Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
 Route::get('/reports', [OvertimeController::class, 'generateReport'])->name('reports.index');
 Route::get('/reports/export-excel', [OvertimeController::class, 'exportExcel'])->name('reports.excel');
+Route::get('/reports/export-summary', [OvertimeController::class, 'exportSummaryExcel'])->name('reports.exportSummaryExcel');
+Route::get('/reports/summary', [OvertimeController::class, 'summaryreport'])->name('reports.summary');
+Route::get('/reports/finance/export', [OvertimeController::class, 'exportFinanceExcel'])->name('reports.exportFinanceExcel');
+Route::get('/reports/finance', [OvertimeController::class, 'financeReport'])->name('reports.finance');
+Route::post('/reports/finance/update', [OvertimeController::class, 'updateFinanceData'])->name('reports.updateFinanceData');
 
+Route::get('/settings/positions', [PositionController::class, 'index'])->name('positions.index');
+Route::post('/settings/positions', [PositionController::class, 'store'])->name('positions.store');
+Route::put('/settings/positions/{id}/rate', [PositionController::class, 'updateRate'])->name('positions.updateRate');
+Route::delete('/settings/positions/{id}', [PositionController::class, 'destroy'])->name('positions.destroy');
 

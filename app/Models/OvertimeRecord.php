@@ -23,7 +23,8 @@ class OvertimeRecord extends Model
         'is_holiday',
         'type',
         'status',
-        'remarks'
+        'remarks',
+        'ot_rate'
     ];
 
     public function employee()

@@ -30,15 +30,15 @@ $isEligible = $event ? (bool)$event->is_tiffin_eligible : false;
         $totalMinutes = ($to->timestamp - $from->timestamp) / 60;
 
         $baseData = [
-            'employee_id'          => $employee->id,
-            'event_id'             => $data['event_id'] ?? null,
-            'ot_date'              => $otDate,
-            'designation_snapshot' => $employee->designation,
-            'ot_rate_snapshot'     => $employee->ot_rate,
-            'is_holiday'           => $data['is_holiday'] ?? false,
-            'remarks'              => $data['remarks'] ?? null,
-            'status'               => 'Pending'
-        ];
+    'employee_id'          => $employee->id,
+    'event_id'             => $data['event_id'] ?? null,
+    'ot_date'              => $otDate,
+    'designation_snapshot' => $employee->position->name,
+    'ot_rate_snapshot'     => $employee->position->ot_rate,
+    'is_holiday'           => $data['is_holiday'] ?? false,
+    'remarks'              => $data['remarks'] ?? null,
+    'status'               => 'Pending'
+];
 
         // १. Holiday को लागि
         if ($baseData['is_holiday']) {
@@ -57,7 +57,9 @@ $isEligible = $event ? (bool)$event->is_tiffin_eligible : false;
             ]));
             return;
         }
-
+if (!$employee->position) {
+    throw new \Exception("यो कर्मचारीको लागि Position तोकिएको छैन। कृपया पहिले Position assign गर्नुहोस्।");
+}
         // २. Regular कार्यदिनको लागि
         $officeStartTime = Carbon::parse($otDate . ' ' . $officeStart);
         $officeEndTime = Carbon::parse($otDate . ' ' . $officeEnd);

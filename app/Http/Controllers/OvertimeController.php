@@ -166,4 +166,117 @@ class OvertimeController extends Controller
     // ४. एक्सेल डाउनलोड गर्नुहोस्
     return Excel::download(new OvertimeExport($data), 'OvertimeReport.xlsx');
 }
+public function summaryReport(Request $request)
+{
+    // १. सुरुमा with(['employee', 'event']) मात्र राख्नुहोस्
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+
+    // २. फिल्टर लजिक (यहाँ ध्यान दिनुहोस्: $request->filled() सही छ कि छैन)
+    if ($request->filled('from_date')) { 
+        $query->where('ot_date', '>=', $request->from_date); 
+    }
+    if ($request->filled('to_date')) { 
+        $query->where('ot_date', '<=', $request->to_date); 
+    }
+    if ($request->filled('employee_id')) { 
+        $query->where('employee_id', $request->employee_id); 
+    }
+    if ($request->filled('event_id')) { 
+        $query->where('event_id', $request->event_id); 
+    }
+
+    // ३. अब query Execute गर्नुहोस्
+    $summaryData = $query->select(
+            'employee_id', 'event_id',
+            \DB::raw('SUM(total_hours) as total_hours'), 
+            \DB::raw('SUM(tiffin_amount) as total_lunch'),
+            \DB::raw('MIN(ot_date) as date_from'), 
+            \DB::raw('MAX(ot_date) as date_to')
+        )
+        ->groupBy('employee_id', 'event_id')
+        ->get();
+
+    return view('reports.summary', compact('summaryData'));
+}
+public function financeReport(Request $request)
+{
+    // 'employee' मा designation कोलम छ, त्यसैले छुट्टै with() मा designation लेख्नु पर्दैन
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+
+    // फिल्टर लजिक
+    if ($request->filled('from_date')) { $query->where('ot_date', '>=', $request->from_date); }
+    if ($request->filled('to_date')) { $query->where('ot_date', '<=', $request->to_date); }
+    if ($request->filled('employee_id')) { $query->where('employee_id', $request->employee_id); }
+    if ($request->filled('event_id')) { $query->where('event_id', $request->event_id); }
+
+    $financeData = $query->select(
+            'employee_id', 'event_id',
+            \DB::raw('SUM(total_hours) as total_hours'),
+            \DB::raw('SUM(tiffin_amount) as total_lunch'),
+            \DB::raw('MIN(ot_date) as date_from'),
+            \DB::raw('MAX(ot_date) as date_to')
+        )
+        ->groupBy('employee_id', 'event_id')
+        ->get();
+
+    return view('reports.finance', compact('financeData'));
+}
+public function updateFinanceData(Request $request)
+{
+    // यहाँबाट rates हरू अपडेट गर्ने लजिक
+    foreach ($request->rates as $id => $rate) {
+        $record = \App\Models\OvertimeRecord::find($id);
+        if ($record) {
+            $record->update(['ot_rate' => $rate]);
+        }
+    }
+
+    return back()->with('success', 'OT Rates सफलतापूर्वक अपडेट गरियो!');
+}
+// OvertimeController.php भित्र यो मेथड थप्नुहोस्
+public function exportFinanceExcel(Request $request)
+{
+    // १. उही क्वेरी लजिक (Finance Report को लागि)
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+
+    if ($request->filled('from_date')) { $query->where('ot_date', '>=', $request->from_date); }
+    if ($request->filled('to_date')) { $query->where('ot_date', '<=', $request->to_date); }
+    if ($request->filled('employee_id')) { $query->where('employee_id', $request->employee_id); }
+    if ($request->filled('event_id')) { $query->where('event_id', $request->event_id); }
+
+    $data = $query->get();
+
+    // २. डेटा खाली छ भने ब्याक पठाउने
+    if ($data->isEmpty()) {
+        return back()->with('error', 'एक्सपोर्ट गर्नका लागि कुनै डेटा भेटिएन!');
+    }
+
+    // ३. FinanceExport क्लास कल गर्ने
+    return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\FinanceExport($data), 'FinanceReport.xlsx');
+}
+public function exportSummaryExcel(Request $request)
+{
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+
+    if ($request->filled('from_date')) { $query->where('ot_date', '>=', $request->from_date); }
+    if ($request->filled('to_date')) { $query->where('ot_date', '<=', $request->to_date); }
+    if ($request->filled('employee_id')) { $query->where('employee_id', $request->employee_id); }
+    if ($request->filled('event_id')) { $query->where('event_id', $request->event_id); }
+
+    $data = $query->select(
+            'employee_id', 'event_id',
+            \DB::raw('SUM(total_hours) as total_hours'), 
+            \DB::raw('SUM(tiffin_amount) as total_lunch'),
+            \DB::raw('MIN(ot_date) as date_from'), 
+            \DB::raw('MAX(ot_date) as date_to')
+        )
+        ->groupBy('employee_id', 'event_id')
+        ->get();
+
+    if ($data->isEmpty()) {
+        return back()->with('error', 'एक्सपोर्ट गर्नका लागि कुनै डेटा भेटिएन!');
+    }
+
+    return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\SummaryExport($data), 'SummaryReport.xlsx');
+}
 }

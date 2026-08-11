@@ -85,6 +85,23 @@
                                 <span>Add Staff</span>
                             </a>
                         </li>
+                           </li>
+                             <li>
+                            <a href="{{ route('employees.index') }}"
+                               class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+                               {{ request()->routeIs('shifts.*') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700' }}">
+                                <i class="fas fa-business-time w-5"></i>
+                                <span>Staff</span>
+                            </a>
+                        </li>
+                        <li>
+        <a href="{{ route('positions.index') }}"
+           class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+           {{ request()->routeIs('positions.*') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700' }}">
+            <i class="fas fa-briefcase w-5"></i>
+            <span>Position Settings</span>
+        </a>
+    </li>
 
                     </ul>
                 </div>
@@ -133,11 +150,19 @@
                             </a>
                         </li>
                           <li>
-                            <a ahref="{{ route('events.list') }}"
+                            <a href="{{ route('reports.summary') }}"
                                class="flex items-center gap-3 p-3 rounded-lg transition duration-200
                                {{ request()->routeIs('events.*') ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-gray-700' }}">
                                 <i class="fas fa-calendar-days w-5"></i>
-                                <span>test</span>
+                                <span>Summary</span>
+                            </a>
+                        </li>
+                         <li>
+                            <a href="{{ route('reports.finance') }}"
+                               class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+                               {{ request()->routeIs('events.*') ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-gray-700' }}">
+                                <i class="fas fa-calendar-days w-5"></i>
+                                <span>Finance</span>
                             </a>
                         </li>
 
