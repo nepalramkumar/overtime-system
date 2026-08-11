@@ -9,12 +9,12 @@ class Position extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'ot_rate',
-        'is_active',
-    ];
-
+protected $fillable = [
+    'name',
+    'ot_rate',
+    'is_active',
+    'level',
+];
     protected function casts(): array
     {
         return [

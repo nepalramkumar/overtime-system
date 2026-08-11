@@ -101,6 +101,24 @@
             <i class="fas fa-briefcase w-5"></i>
             <span>Position Settings</span>
         </a>
+        <li>
+    <a href="{{ route('overtime.pending') }}"
+       class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+       {{ request()->routeIs('overtime.pending') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700' }}">
+        <i class="fas fa-clock w-5"></i>
+        <span>Pending Overtime</span>
+    </a>
+</li>
+        @if(auth()->user()->role === 'admin')
+<li>
+        <a href="{{ route('permissions.index') }}"
+           class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+           {{ request()->routeIs('permissions.*') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700' }}">
+            <i class="fas fa-lock w-5"></i>
+            <span>Role Permissions</span>
+        </a>
+    </li>
+@endif
     </li>
 
                     </ul>

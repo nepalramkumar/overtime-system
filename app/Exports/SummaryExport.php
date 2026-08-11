@@ -15,23 +15,29 @@ class SummaryExport implements FromCollection, WithHeadings
     }
 
     public function collection()
-{
-    return $this->data->flatten(1)->map(function($item, $index) {
-        return [
-            $index + 1,
-            $item->employee->name ?? 'N/A',
-            $item->employee->designation ?? 'N/A',
-            $item->event->event_name ?? 'N/A',
-            $item->date_from,
-            $item->date_to,
-            $item->total_hours,
-            $item->total_lunch,
-        ];
-    });
-}
+    {
+        if (empty($this->data)) {
+            return collect([['Error' => 'डेटा उपलब्ध छैन']]);
+        }
 
-public function headings(): array
-{
-    return ["SN","Name", "Designation", "Event", "Date From", "Date To", "Total Hours", "Lunch Total"];
-}
+        $rows = [];
+
+        foreach ($this->data as $rec) {
+            $rows[] = [
+                'name'        => $rec->employee->name ?? 'N/A',
+                'event'       => $rec->event->event_name ?? 'सामान्य (General)',
+                'date_from'   => $rec->date_from ?? 'N/A',
+                'date_to'     => $rec->date_to ?? 'N/A',
+                'total_hours' => $rec->total_hours ?? 0,
+                'total_lunch' => $rec->total_lunch ?? 0,
+            ];
+        }
+
+        return collect($rows);
+    }
+
+    public function headings(): array
+    {
+        return ["कर्मचारी", "कार्यक्रम", "मिति (देखि)", "मिति (सम्म)", "जम्मा घण्टा", "जम्मा खाजा"];
+    }
 }

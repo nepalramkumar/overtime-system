@@ -104,7 +104,46 @@ class OvertimeController extends Controller
         $record->delete();
         return redirect()->back()->with('success', 'रेकर्ड हटाइयो!');
     }
+public function pendingList(Request $request)
+{
+    $query = OvertimeRecord::with('employee', 'event')->where('status', 'Pending');
 
+    if ($request->filled('from_date') && $request->filled('to_date')) {
+        $query->whereBetween('ot_date', [$request->from_date, $request->to_date]);
+    }
+    if ($request->filled('employee_id')) {
+        $query->where('employee_id', $request->employee_id);
+    }
+    if ($request->filled('event_id')) {
+        $query->where('event_id', $request->event_id);
+    }
+
+    $records = $query->orderBy('ot_date', 'desc')->get();
+
+    return view('overtime.pending', compact('records'));
+}
+
+public function verify($id)
+{
+    // सुरक्षा जाँच: login भएको र role account/admin भएको मात्र verify गर्न पाउने
+    if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'account'])) {
+        return redirect()->back()->with('error', 'तपाईंलाई verify गर्ने अधिकार छैन।');
+    }
+
+    $record = OvertimeRecord::findOrFail($id);
+
+    if ($record->status === 'Verified') {
+        return redirect()->back()->with('error', 'यो रेकर्ड पहिले नै verify भइसकेको छ।');
+    }
+
+    $record->update([
+        'status'      => 'Verified',
+        'verified_by' => auth()->id(),
+        'verified_at' => now(),
+    ]);
+
+    return redirect()->back()->with('success', 'रेकर्ड सफलतापूर्वक verify भयो!');
+}
     public function generateReport(Request $request)
     {
         if (!$request->hasAny(['from_date', 'to_date', 'employee_id', 'event_id', 'group_by'])) {
@@ -115,7 +154,7 @@ class OvertimeController extends Controller
             'hasSearched' => false // सर्च गरेको छैन
         ]);
     }
-        $query = OvertimeRecord::query()->with('employee', 'event');
+        $query = OvertimeRecord::query()->with('employee', 'event')->where('status', 'Verified');
 
         if ($request->filled('from_date') && $request->filled('to_date')) {
             $query->whereBetween('ot_date', [$request->from_date, $request->to_date]);
@@ -143,7 +182,8 @@ class OvertimeController extends Controller
     }
    public function exportExcel(Request $request) 
 {
-    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+    
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event'])->where('status', 'Verified');
 
     // फिल्टरहरू (यसमा परिवर्तन नगर्ने)
     if ($request->filled('employee_id')) { $query->where('employee_id', $request->employee_id); }
@@ -169,7 +209,7 @@ class OvertimeController extends Controller
 public function summaryReport(Request $request)
 {
     // १. सुरुमा with(['employee', 'event']) मात्र राख्नुहोस्
-    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event'])->where('status', 'Verified');
 
     // २. फिल्टर लजिक (यहाँ ध्यान दिनुहोस्: $request->filled() सही छ कि छैन)
     if ($request->filled('from_date')) { 
@@ -201,7 +241,7 @@ public function summaryReport(Request $request)
 public function financeReport(Request $request)
 {
     // 'employee' मा designation कोलम छ, त्यसैले छुट्टै with() मा designation लेख्नु पर्दैन
-    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event'])->where('status', 'Verified');
 
     // फिल्टर लजिक
     if ($request->filled('from_date')) { $query->where('ot_date', '>=', $request->from_date); }
@@ -227,7 +267,7 @@ public function updateFinanceData(Request $request)
     foreach ($request->rates as $id => $rate) {
         $record = \App\Models\OvertimeRecord::find($id);
         if ($record) {
-            $record->update(['ot_rate' => $rate]);
+            $record->update(['ot_rate_snapshot' => $rate]);
         }
     }
 
@@ -237,7 +277,7 @@ public function updateFinanceData(Request $request)
 public function exportFinanceExcel(Request $request)
 {
     // १. उही क्वेरी लजिक (Finance Report को लागि)
-    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+   $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event'])->where('status', 'Verified');
 
     if ($request->filled('from_date')) { $query->where('ot_date', '>=', $request->from_date); }
     if ($request->filled('to_date')) { $query->where('ot_date', '<=', $request->to_date); }
@@ -256,7 +296,7 @@ public function exportFinanceExcel(Request $request)
 }
 public function exportSummaryExcel(Request $request)
 {
-    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event']);
+    $query = \App\Models\OvertimeRecord::query()->with(['employee', 'event'])->where('status', 'Verified');
 
     if ($request->filled('from_date')) { $query->where('ot_date', '>=', $request->from_date); }
     if ($request->filled('to_date')) { $query->where('ot_date', '<=', $request->to_date); }

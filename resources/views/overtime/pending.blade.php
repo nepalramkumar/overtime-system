@@ -1,0 +1,82 @@
+@extends('layouts.app')
+
+@section('content')
+<form action="{{ route('overtime.pending') }}" method="GET" class="bg-white border border-gray-200 rounded-lg p-3 mb-4 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">From Date</label>
+            <input type="date" name="from_date" value="{{ request('from_date') }}" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">To Date</label>
+            <input type="date" name="to_date" value="{{ request('to_date') }}" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">कर्मचारी</label>
+            <select name="employee_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
+                <option value="">सबै</option>
+                @foreach(\App\Models\Employee::all() as $emp)
+                    <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">कार्यक्रम</label>
+            <select name="event_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
+                <option value="">सबै छान्नुहोस्</option>
+                @foreach(\App\Models\Event::all() as $event)
+                    <option value="{{ $event->id }}" {{ request('event_id') == $event->id ? 'selected' : '' }}>{{ $event->event_name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="flex gap-2 items-end">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded">🔍 खोज</button>
+            <a href="{{ route('overtime.pending') }}" class="bg-gray-500 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded">Reset</a>
+        </div>
+    </div>
+</form>
+<div class="p-6">
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Verify बाँकी रहेका OT Records</h2>
+
+    @if(session('success'))
+        <div class="bg-green-100 text-green-700 p-3 rounded mb-4">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">{{ session('error') }}</div>
+    @endif
+
+    <div class="overflow-x-auto shadow-md sm:rounded-lg mt-4">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3 border">कर्मचारी</th>
+                    <th class="px-6 py-3 border">मिति</th>
+                    <th class="px-6 py-3 border">समय</th>
+                    <th class="px-6 py-3 border">घण्टा</th>
+                    <th class="px-6 py-3 border">कार्यक्रम</th>
+                    <th class="px-6 py-3 border">कार्य</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($records as $rec)
+                <tr class="bg-white border-b hover:bg-gray-50">
+                    <td class="px-6 py-4 border">{{ $rec->employee->name ?? 'N/A' }}</td>
+                    <td class="px-6 py-4 border">{{ $rec->ot_date }}</td>
+                    <td class="px-6 py-4 border">{{ $rec->from_time }} - {{ $rec->to_time }}</td>
+                    <td class="px-6 py-4 border">{{ $rec->total_hours }}</td>
+                    <td class="px-6 py-4 border">{{ $rec->event->event_name ?? 'सामान्य' }}</td>
+                    <td class="px-6 py-4 border">
+                        <form action="{{ route('overtime.verify', $rec->id) }}" method="POST" onsubmit="return confirm('के तपाईं यो रेकर्ड verify गर्न चाहनुहुन्छ?')">
+                            @csrf
+                            <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Verify</button>
+                        </form>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="6" class="text-center p-4">कुनै pending record छैन।</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+@endsection

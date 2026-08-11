@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; // <--- यो थप्नुहोस्
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OvertimeRecord extends Model
 {
-    use HasFactory, SoftDeletes; // <--- यहाँ SoftDeletes थप्नुहोस्
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'employee_id',
@@ -24,15 +24,22 @@ class OvertimeRecord extends Model
         'type',
         'status',
         'remarks',
-        'ot_rate'
+        'verified_by',
+        'verified_at',
     ];
 
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id');
     }
+
     public function event()
-{
-    return $this->belongsTo(\App\Models\Event::class, 'event_id');
-}
+    {
+        return $this->belongsTo(\App\Models\Event::class, 'event_id');
+    }
+
+    public function verifier()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
 }
