@@ -95,6 +95,14 @@
                             </a>
                         </li>
                         <li>
+    <a href="<?php echo e(route('overtime.verified')); ?>"
+       class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+       <?php echo e(request()->routeIs('overtime.verified') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700'); ?>">
+        <i class="fas fa-check-double w-5"></i>
+        <span>Verified OT (Unverify)</span>
+    </a>
+</li>
+                        <li>
     <a href="<?php echo e(route('overtime.my')); ?>"
        class="flex items-center gap-3 p-3 rounded-lg transition duration-200
        <?php echo e(request()->routeIs('overtime.my') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700'); ?>">

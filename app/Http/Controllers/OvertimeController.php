@@ -30,7 +30,19 @@ class OvertimeController extends Controller
             ->where('permission', 'overtime.entry.all')
             ->exists();
 }
+private function canVerify(): bool
+{
+    $role = auth()->user()->role;
+    if ($role === 'admin') return true;
+    return \App\Models\RolePermission::where('role', $role)->where('permission', 'overtime.verify')->exists();
+}
 
+private function canUnverify(): bool
+{
+    $role = auth()->user()->role;
+    if ($role === 'admin') return true;
+    return \App\Models\RolePermission::where('role', $role)->where('permission', 'overtime.unverify')->exists();
+}
 public function create(Request $request)
 {
     $canSelectAny = $this->canEnterForAnyone();
@@ -98,7 +110,9 @@ public function create(Request $request)
 {
     $record = OvertimeRecord::findOrFail($id);
 
-    if (!$this->canEnterForAnyone() && (int) $record->employee_id !== (int) auth()->user()->employee_id) {
+    $canSelectAny = $this->canEnterForAnyone();
+
+    if (!$canSelectAny && (int) $record->employee_id !== (int) auth()->user()->employee_id) {
         abort(403, 'तपाईं यो record edit गर्न पाउनुहुन्न।');
     }
 
@@ -107,7 +121,7 @@ public function create(Request $request)
     }
 
     $employees = Employee::all();
-    return view('overtime.edit', compact('record', 'employees'));
+    return view('overtime.edit', compact('record', 'employees', 'canSelectAny'));
 }
     public function update(Request $request, $id)
 {
@@ -193,8 +207,7 @@ public function pendingList(Request $request)
 
 public function verify($id)
 {
-    // सुरक्षा जाँच: login भएको र role account/admin भएको मात्र verify गर्न पाउने
-    if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'account'])) {
+    if (!$this->canVerify()) {
         return redirect()->back()->with('error', 'तपाईंलाई verify गर्ने अधिकार छैन।');
     }
 
@@ -322,7 +335,7 @@ public function verify($id)
     return Excel::download(new OvertimeExport($data), 'OvertimeReport.xlsx');
 }
 
-public function myRecords()
+public function myRecords(Request $request)
 {
     $employeeId = auth()->user()->employee_id;
 
@@ -330,12 +343,31 @@ public function myRecords()
         return redirect()->back()->with('error', 'तपाईंको account कुनै Employee सँग link भएको छैन।');
     }
 
-    $records = OvertimeRecord::with('event')
-                ->where('employee_id', $employeeId)
-                ->orderBy('ot_date', 'desc')
-                ->get();
+    $query = OvertimeRecord::with('event')->where('employee_id', $employeeId);
+
+    if ($request->filled('from_date') && $request->filled('to_date')) {
+        $query->whereBetween('ot_date', [$request->from_date, $request->to_date]);
+    }
+    if ($request->filled('event_id')) {
+        $query->where('event_id', $request->event_id);
+    }
+
+    $records = $query->orderBy('ot_date', 'desc')->get();
 
     return view('overtime.my', compact('records'));
+}
+public function index()
+{
+    if ($this->canEnterForAnyone()) {
+        $records = OvertimeRecord::with('employee', 'event')->orderBy('ot_date', 'desc')->get();
+    } else {
+        $records = OvertimeRecord::with('employee', 'event')
+                    ->where('employee_id', auth()->user()->employee_id)
+                    ->orderBy('ot_date', 'desc')
+                    ->get();
+    }
+
+    return view('overtime.index', compact('records'));
 }
 public function summaryReport(Request $request)
 {
@@ -459,5 +491,65 @@ public function exportSummaryExcel(Request $request)
     }
 
     return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\SummaryExport($data), 'SummaryReport.xlsx');
+}
+public function reject(Request $request, $id)
+{
+    if (!$this->canVerify()) {
+        return redirect()->back()->with('error', 'तपाईंलाई reject गर्ने अधिकार छैन।');
+    }
+
+    $request->validate([
+        'reason' => 'required|string|max:500',
+    ]);
+
+    $record = OvertimeRecord::findOrFail($id);
+
+    $record->update([
+        'status'            => 'Rejected',
+        'rejection_reason'  => $request->reason,
+        'rejected_by'       => auth()->id(),
+        'rejected_at'       => now(),
+    ]);
+
+    return redirect()->back()->with('success', 'रेकर्ड Reject गरियो।');
+}
+
+public function unverify($id)
+{
+    if (!$this->canUnverify()) {
+        return redirect()->back()->with('error', 'तपाईंलाई Unverify गर्ने अधिकार छैन।');
+    }
+
+    $record = OvertimeRecord::findOrFail($id);
+
+    if ($record->status !== 'Verified') {
+        return redirect()->back()->with('error', 'यो रेकर्ड Verified छैन।');
+    }
+
+    $record->update([
+        'status'      => 'Pending',
+        'verified_by' => null,
+        'verified_at' => null,
+    ]);
+
+    return redirect()->back()->with('success', 'रेकर्ड Unverify गरियो, अब Pending मा फर्कियो।');
+}
+public function verifiedList(Request $request)
+{
+    $query = OvertimeRecord::with('employee.position', 'event')->where('status', 'Verified');
+
+    if ($request->filled('from_date') && $request->filled('to_date')) {
+        $query->whereBetween('ot_date', [$request->from_date, $request->to_date]);
+    }
+    if ($request->filled('employee_id')) {
+        $query->where('employee_id', $request->employee_id);
+    }
+    if ($request->filled('event_id')) {
+        $query->where('event_id', $request->event_id);
+    }
+
+    $records = $query->orderBy('ot_date', 'desc')->get();
+
+    return view('overtime.verified', compact('records'));
 }
 }
