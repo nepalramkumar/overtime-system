@@ -95,6 +95,14 @@
                             </a>
                         </li>
                         <li>
+    <a href="<?php echo e(route('overtime.my')); ?>"
+       class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+       <?php echo e(request()->routeIs('overtime.my') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700'); ?>">
+        <i class="fas fa-user-clock w-5"></i>
+        <span>मेरो OT Records</span>
+    </a>
+</li>
+                        <li>
         <a href="<?php echo e(route('positions.index')); ?>"
            class="flex items-center gap-3 p-3 rounded-lg transition duration-200
            <?php echo e(request()->routeIs('positions.*') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700'); ?>">

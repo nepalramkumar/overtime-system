@@ -52,58 +52,45 @@
         <tr class="bg-blue-700 text-white text-sm">
             <th class="p-3 border">सि.नं.</th>
             <th class="p-3 border">मिति</th>
-            <th class="p-3 border">कर्मचारी</th> 
-            <th class="p-3 border">कार्यक्रम</th>
+            <th class="p-3 border">कर्मचारी कोड</th>
+            <th class="p-3 border">कर्मचारी</th>
+            <th class="p-3 border">पद</th>
+            <th class="p-3 border">कार्यक्रम / कारण</th>
             <th class="p-3 border">समय (From-To)</th>
             <th class="p-3 border">घण्टा</th>
-             <th class="p-3 border">खाजा</th>
-            <th class="p-3 border">जम्मा घण्टा</th>
-            <th class="p-3 border">कुल खाजा</th>
+            <th class="p-3 border">खाजा</th>
         </tr>
-    </thead>
-   <tbody>
-        @foreach($groupedData as $records)
-            @php 
-                $totalGroupHours = $records->sum('total_hours');
-                $totalGroupAmount = $records->sum('tiffin_amount');
-            @endphp
-
-            @foreach($records as $rec)
+        </thead>
+        <tbody>
+        @php $sn = 1; @endphp
+        @forelse($groupedData as $empGroup)
+            @foreach($empGroup['events'] as $eventGroup)
+                @foreach($eventGroup['records'] as $rec)
                 <tr>
-                    <td class="p-3 border text-center">{{ $loop->parent->iteration }}</td>
+                    <td class="p-3 border text-center">{{ $sn++ }}</td>
                     <td class="p-3 border">{{ $rec->ot_date }}</td>
-                   <td class="p-3 border">{{ $rec->employee->name ?? 'N/A' }}</td>
-                    <td class="p-3 border">{{ $rec->event->event_name ?? 'N/A' }}</td>
+                    <td class="p-3 border">{{ $empGroup['employee']->employee_code ?? '-' }}</td>
+                    <td class="p-3 border">{{ $empGroup['employee']->name ?? 'N/A' }}</td>
+                    <td class="p-3 border">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
+                    <td class="p-3 border">{{ $rec->event->event_name ?? ($rec->remarks ?: 'सामान्य (General)') }}</td>
                     <td class="p-3 border text-center">{{ $rec->from_time }} - {{ $rec->to_time }}</td>
                     <td class="p-3 border text-center">{{ number_format($rec->total_hours, 2) }}</td>
                     <td class="p-3 border text-center">{{ number_format($rec->tiffin_amount, 2) }}</td>
-                    
-                    @if($loop->first)
-                        <td rowspan="{{ $records->count() }}" class="p-3 border text-center font-bold bg-blue-50 align-middle">
-                            {{ number_format($totalGroupHours, 2) }}
-                        </td>
-                        <td rowspan="{{ $records->count() }}" class="p-3 border text-right font-bold bg-blue-50 align-middle">
-                            रु {{ number_format($totalGroupAmount, 2) }}
-                        </td>
-                    @endif
                 </tr>
+                @endforeach
             @endforeach
-        @endforeach
-    </tbody>
-       <tfoot>
-    <tr class="bg-gray-800 text-white font-bold">
-       
-        <td colspan="6" class="p-3 border text-right">कुल जम्मा (Grand Total)</td>
-        <td class="p-3 border text-center">-</td> 
-        <td class="p-3 border text-center">{{ number_format($totalHoursDecimalSum, 2) }}</td>
-        <td class="p-3 border text-right">रु {{ number_format($totalAmountSum, 2) }}</td>
-    </tr>
-</tfoot>
+        @empty
+            <tr><td colspan="9" class="text-center p-4">कुनै डेटा भेटिएन।</td></tr>
+        @endforelse
+        </tbody>
+        <tfoot>
+        <tr class="bg-gray-800 text-white font-bold">
+            <td colspan="7" class="p-3 border text-right">कुल जम्मा (Grand Total)</td>
+            <td class="p-3 border text-center">{{ number_format($totalHoursDecimalSum, 2) }}</td>
+            <td class="p-3 border text-center">रु {{ number_format($totalAmountSum, 2) }}</td>
+        </tr>
+        </tfoot>
     </table>
-    
-    <div class="mt-4">
-        {{-- $reportData->appends(request()->query())->links() --}}
-    </div>
 </div>
 <a href="{{ route('reports.excel', request()->all()) }}" class="bg-green-600 text-white px-3 py-1 rounded">
     Excel डाउनलोड

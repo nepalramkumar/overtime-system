@@ -18,14 +18,21 @@
 
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Select Employee</label>
-           <select name="employee_id" id="employee-select" class="w-full p-2 border rounded" required>
-    <option value="">-- नाम टाइप गर्नुहोस् --</option>
-    @foreach($employees as $emp)
-        <option value="{{ $emp->id }}">
-            {{ $emp->name }} (ID: {{ $emp->id }}) - {{ $emp->designation }}
-        </option>
-    @endforeach
-</select>
+                @if($canSelectAny)
+                    <select name="employee_id" id="employee-select" class="w-full p-2 border rounded" required>
+                        <option value="">-- नाम टाइप गर्नुहोस् --</option>
+                        @foreach($employees as $emp)
+                            <option value="{{ $emp->id }}">
+                                {{ $emp->name }} (ID: {{ $emp->id }}) - {{ $emp->designation }}
+                            </option>
+                        @endforeach
+                    </select>
+                @else
+                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
+                        {{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? '' }})
+                    </div>
+                    <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
+                @endif
             </div>
 
             @if(isset($selectedEventId) && $selectedEventId)
@@ -78,6 +85,7 @@
         </form>
     </div>
 
+@if($canSelectAny)
 <script>
     new TomSelect("#employee-select",{
         create: false,
@@ -87,4 +95,5 @@
         }
     });
 </script>
+@endif
 @endsection

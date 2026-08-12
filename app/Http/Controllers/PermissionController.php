@@ -8,15 +8,17 @@ use Illuminate\Http\Request;
 class PermissionController extends Controller
 {
     private $permissions = [
-        'employees.manage'  => 'कर्मचारी व्यवस्थापन',
-        'users.manage'      => 'युजर व्यवस्थापन',
-        'settings.manage'   => 'सामान्य सेटिङ्स (Lunch/Shift)',
-        'positions.manage'  => 'Position सेटिङ्स',
-        'events.manage'     => 'Event व्यवस्थापन',
-        'overtime.entry'    => 'OT भर्ने',
-        'overtime.verify'   => 'OT verify गर्ने',
-        'reports.view'      => 'Report हेर्ने/Export गर्ने',
-    ];
+    'employees.manage'  => 'कर्मचारी व्यवस्थापन',
+    'users.manage'      => 'युजर व्यवस्थापन',
+    'settings.manage'   => 'सामान्य सेटिङ्स (Lunch/Shift)',
+    'positions.manage'  => 'Position सेटिङ्स',
+    'events.manage'     => 'Event व्यवस्थापन',
+    'overtime.entry'    => 'OT भर्ने (आफ्नै मात्र)',
+    'overtime.entry.all'=> 'जोसुकैको OT भर्ने',
+    'overtime.verify'   => 'OT verify/reject गर्ने',
+    'overtime.unverify' => 'Verified लाई फेरि Pending बनाउने',
+    'reports.view'      => 'Report हेर्ने/Export गर्ने',
+];
 
     private $roles = ['manager', 'employee', 'account'];
 

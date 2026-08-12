@@ -50,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/overtime/{id}/verify', [OvertimeController::class, 'verify'])->middleware('role:overtime.verify')->name('overtime.verify');
     Route::get('/overtime/pending', [OvertimeController::class, 'pendingList'])->middleware('role:overtime.verify')->name('overtime.pending');
 Route::post('/overtime/{id}/verify', [OvertimeController::class, 'verify'])->middleware('role:overtime.verify')->name('overtime.verify');
+Route::get('/overtime/my', [OvertimeController::class, 'myRecords'])->middleware('role:overtime.entry')->name('overtime.my');
 
     // Employees Resource Route
     Route::resource('employees', EmployeeController::class)->middleware('role:employees.manage');

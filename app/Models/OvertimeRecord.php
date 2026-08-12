@@ -11,22 +11,25 @@ class OvertimeRecord extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'employee_id',
-        'event_id',
-        'ot_date',
-        'from_time',
-        'to_time',
-        'total_hours',
-        'designation_snapshot',
-        'ot_rate_snapshot',
-        'tiffin_amount',
-        'is_holiday',
-        'type',
-        'status',
-        'remarks',
-        'verified_by',
-        'verified_at',
-    ];
+    'employee_id',
+    'event_id',
+    'ot_date',
+    'from_time',
+    'to_time',
+    'total_hours',
+    'designation_snapshot',
+    'ot_rate_snapshot',
+    'tiffin_amount',
+    'is_holiday',
+    'type',
+    'status',
+    'remarks',
+    'verified_by',
+    'verified_at',
+    'rejection_reason',
+    'rejected_by',
+    'rejected_at',
+];
 
     public function employee()
     {
@@ -42,4 +45,8 @@ class OvertimeRecord extends Model
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
+    public function rejecter()
+{
+    return $this->belongsTo(User::class, 'rejected_by');
+}
 }

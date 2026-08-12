@@ -18,15 +18,22 @@
 
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Select Employee</label>
-           <select name="employee_id" id="employee-select" class="w-full p-2 border rounded" required>
-    <option value="">-- नाम टाइप गर्नुहोस् --</option>
-    <?php $__currentLoopData = $employees; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-        <option value="<?php echo e($emp->id); ?>">
-            <?php echo e($emp->name); ?> (ID: <?php echo e($emp->id); ?>) - <?php echo e($emp->designation); ?>
+                <?php if($canSelectAny): ?>
+                    <select name="employee_id" id="employee-select" class="w-full p-2 border rounded" required>
+                        <option value="">-- नाम टाइप गर्नुहोस् --</option>
+                        <?php $__currentLoopData = $employees; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($emp->id); ?>">
+                                <?php echo e($emp->name); ?> (ID: <?php echo e($emp->id); ?>) - <?php echo e($emp->designation); ?>
 
-        </option>
-    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-</select>
+                            </option>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                    </select>
+                <?php else: ?>
+                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
+                        <?php echo e($lockedEmployee->name ?? 'N/A'); ?> (<?php echo e($lockedEmployee->employee_code ?? ''); ?>)
+                    </div>
+                    <input type="hidden" name="employee_id" value="<?php echo e($lockedEmployee->id ?? ''); ?>">
+                <?php endif; ?>
             </div>
 
             <?php if(isset($selectedEventId) && $selectedEventId): ?>
@@ -79,6 +86,7 @@
         </form>
     </div>
 
+<?php if($canSelectAny): ?>
 <script>
     new TomSelect("#employee-select",{
         create: false,
@@ -88,5 +96,6 @@
         }
     });
 </script>
+<?php endif; ?>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/overtime/create.blade.php ENDPATH**/ ?>
