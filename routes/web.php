@@ -8,7 +8,8 @@ use App\Http\Controllers\MasterSettingsController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\PermissionController; // <--- १. यो थपियो
+use App\Http\Controllers\PermissionController; 
+use App\Http\Controllers\PurposeController;
 
 // स्वागत पेज (Public)
 Route::get('/', function () {
@@ -38,7 +39,9 @@ Route::middleware(['auth'])->group(function () {
     // Permission Routes (Admin Only - controller भित्रै check गरिएको)
     Route::get('/settings/permissions', [PermissionController::class, 'index'])->name('permissions.index');
     Route::post('/settings/permissions', [PermissionController::class, 'update'])->name('permissions.update');
-
+Route::get('/settings/purposes', [PurposeController::class, 'index'])->middleware('role:events.manage')->name('purposes.index');
+Route::post('/settings/purposes', [PurposeController::class, 'store'])->middleware('role:events.manage')->name('purposes.store');
+Route::delete('/settings/purposes/{id}', [PurposeController::class, 'destroy'])->middleware('role:events.manage')->name('purposes.destroy');
     // Overtime Routes
     Route::get('/overtime/create', [OvertimeController::class, 'create'])->middleware('role:overtime.entry')->name('overtime.create');
     Route::post('/overtime/store', [OvertimeController::class, 'store'])->middleware('role:overtime.entry')->name('overtime.store');

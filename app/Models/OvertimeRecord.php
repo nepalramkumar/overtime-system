@@ -13,6 +13,7 @@ class OvertimeRecord extends Model
     protected $fillable = [
     'employee_id',
     'event_id',
+    'purpose_id',
     'ot_date',
     'from_time',
     'to_time',
@@ -48,5 +49,9 @@ class OvertimeRecord extends Model
     public function rejecter()
 {
     return $this->belongsTo(User::class, 'rejected_by');
+}
+public function purpose()
+{
+    return $this->belongsTo(Purpose::class);
 }
 }

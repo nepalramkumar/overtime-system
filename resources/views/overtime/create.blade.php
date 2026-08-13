@@ -46,6 +46,21 @@
                     @endif
                 @endforeach
             @else
+            @if(!isset($selectedEventId) || !$selectedEventId)
+<div>
+    <label class="block text-gray-700 font-semibold mb-1">Purpose (General OT भए, धेरै दिन चल्ने काम भए मात्र छान्नुहोस्)</label>
+    <select name="purpose_id" class="w-full p-2 border rounded">
+        <option value="">-- एक दिनको मात्र काम (Purpose चाहिँदैन) --</option>
+        @foreach(\App\Models\Purpose::orderBy('name')->get() as $purpose)
+            <option value="{{ $purpose->id }}">{{ $purpose->name }}</option>
+        @endforeach
+    </select>
+    <p class="text-xs text-gray-500 mt-1">
+        चाहिएको Purpose list मा छैन भने,
+        <a href="{{ route('purposes.index') }}" target="_blank" class="text-blue-600 underline">यहाँ नयाँ थप्नुहोस्</a>।
+    </p>
+</div>
+@endif
                 <div class="bg-gray-50 p-3 rounded border border-gray-200 mb-4">
                     <label class="block text-gray-500 font-bold text-xs uppercase tracking-wide">OT Category</label>
                     <span class="text-gray-700 font-semibold">सामान्य प्रयोजन (General Purpose OT)</span>

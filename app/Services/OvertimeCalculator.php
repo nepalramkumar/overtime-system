@@ -5,6 +5,7 @@ namespace App\Services;
 use Carbon\Carbon;
 use App\Models\OvertimeRecord;
 use App\Models\Event;
+use App\Models\SnackAllowance;
 
 class OvertimeCalculator
 {
@@ -29,7 +30,7 @@ $isEligible = $event ? (bool)$event->is_tiffin_eligible : false;
 
         $totalMinutes = ($to->timestamp - $from->timestamp) / 60;
 
-        $baseData = [
+       $baseData = [
     'employee_id'          => $employee->id,
     'event_id'             => $data['event_id'] ?? null,
     'ot_date'              => $otDate,
@@ -37,6 +38,7 @@ $isEligible = $event ? (bool)$event->is_tiffin_eligible : false;
     'ot_rate_snapshot'     => $employee->position->ot_rate,
     'is_holiday'           => $data['is_holiday'] ?? false,
     'remarks'              => $data['remarks'] ?? null,
+    'purpose_id' => $data['purpose_id'] ?? null,
     'status'               => 'Pending'
 ];
 
@@ -115,16 +117,22 @@ if (!$employee->position) {
     }
 
     private function calculateTiffin($hours, $isEligible)
-    {
-        if ($isEligible) {
-            return 0;
-        }
-
-        if ($hours < 2) return 0;
-        if ($hours >= 2 && $hours < 3) return 120;
-        if ($hours >= 3 && $hours < 5) return 180;
-        if ($hours >= 5 && $hours <= 9) return 300;
-        
-        return 420;
+{
+    if ($isEligible) {
+        return 0;
     }
+
+    $rule = SnackAllowance::where('min_hours', '<=', $hours)
+                ->where('max_hours', '>', $hours)
+                ->first();
+
+    if ($rule) {
+        return $rule->amount;
+    }
+
+    // कुनै range नमिलेमा (जस्तै hours सबैभन्दा ठूलो range भन्दा पनि बढी भए),
+    // सबैभन्दा ठूलो max_hours भएको rule लाई नै लागू गर्ने (open-ended जस्तै)
+    $highestRule = SnackAllowance::orderBy('max_hours', 'desc')->first();
+    return $highestRule ? $highestRule->amount : 0;
+}
 }

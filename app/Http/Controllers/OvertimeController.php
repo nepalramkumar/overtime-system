@@ -11,6 +11,7 @@ use App\Models\OvertimeRecord;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\OvertimeExport;
+use App\Services\OvertimeWordService;
 
 class OvertimeController extends Controller
 {
@@ -84,15 +85,17 @@ public function create(Request $request)
         $employee = Employee::findOrFail($request->employee_id);
         $isHoliday = $request->has('is_holiday');
 
-        $additionalData = [
-            'event_id'           => $request->event_id, 
-            'ot_date'            => $request->ot_date,
-            'from_time'          => $request->from_time, 
-            'to_time'            => $request->to_time,   
-            'is_holiday'         => $isHoliday,
-            'is_tiffin_eligible' => true, 
-            'remarks'            => $request->remarks,
-        ];
+        $baseData = [
+    'employee_id'          => $employee->id,
+    'event_id'             => $data['event_id'] ?? null,
+    'ot_date'              => $otDate,
+    'designation_snapshot' => $employee->position->name,
+    'ot_rate_snapshot'     => $employee->position->ot_rate,
+    'is_holiday'           => $data['is_holiday'] ?? false,
+    'remarks'              => $data['remarks'] ?? null,
+    'purpose_id' => $request->purpose_id,
+    'status'               => 'Pending'
+];
 
         $this->calculator->calculateAndSave($additionalData, $employee);
         return redirect()->back()->with('success', 'ओभरटाइम विवरण सफलतापूर्वक दर्ता भयो।');
@@ -150,6 +153,7 @@ public function create(Request $request)
             'to_time'    => $request->to_time,
             'is_holiday' => $request->has('is_holiday'),
             'remarks'    => $request->remarks,
+            'purpose_id' => $request->purpose_id,
         ];
 
         $newRecord = $this->calculator->calculateAndSave($additionalData, $employee);
@@ -185,6 +189,40 @@ public function create(Request $request)
 
     $record->delete();
     return redirect()->back()->with('success', 'रेकर्ड हटाइयो!');
+}
+public function printSlip($id)
+{
+    $record = OvertimeRecord::with('employee.position', 'event', 'purpose')->findOrFail($id);
+    $wordService = new OvertimeWordService();
+
+    // Case 1: Formal Event भएको — सधैं Group format
+    if ($record->event_id) {
+        $records = OvertimeRecord::with('employee.position', 'event')
+                    ->where('event_id', $record->event_id)
+                    ->get();
+        return $wordService->generateGroup($records, $record->event->event_name);
+    }
+
+    // Case 2: Purpose भएको — कति जना छन् त्यसमा भर पर्छ
+    if ($record->purpose_id) {
+        $records = OvertimeRecord::with('employee.position', 'purpose')
+                    ->where('purpose_id', $record->purpose_id)
+                    ->get();
+
+        $distinctEmployees = $records->pluck('employee_id')->unique();
+
+        if ($distinctEmployees->count() > 1) {
+            // धेरै जना — Group format
+            return $wordService->generateGroup($records, $record->purpose->name);
+        } else {
+            // एउटै जना, धेरै दिन भए पनि — Individual format
+            return $wordService->generateIndividual($records, $record->employee);
+        }
+    }
+
+    // Case 3: न Event, न Purpose — एउटै दिनको Individual OT
+    $records = collect([$record]);
+    return $wordService->generateIndividual($records, $record->employee);
 }
 public function pendingList(Request $request)
 {

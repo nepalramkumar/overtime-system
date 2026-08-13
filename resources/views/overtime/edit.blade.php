@@ -60,6 +60,15 @@
                 @endif
             </div>
 
+          <div>
+    <label class="block text-gray-700 font-semibold mb-1">Purpose (General OT भए, धेरै दिन चल्ने काम भए मात्र छान्नुहोस्)</label>
+    <select name="purpose_id" class="w-full p-2 border rounded">
+        <option value="">-- एक दिनको मात्र काम (Purpose चाहिँदैन) --</option>
+        @foreach(\App\Models\Purpose::orderBy('name')->get() as $purpose)
+            <option value="{{ $purpose->id }}" {{ $record->purpose_id == $purpose->id ? 'selected' : '' }}>{{ $purpose->name }}</option>
+        @endforeach
+    </select>
+</div>
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Date</label>
                 <input type="date" name="ot_date" value="{{ $record->ot_date }}" class="w-full p-2 border rounded" required>

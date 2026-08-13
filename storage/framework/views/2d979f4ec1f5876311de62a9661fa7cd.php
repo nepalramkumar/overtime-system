@@ -95,6 +95,14 @@
                             </a>
                         </li>
                         <li>
+    <a href="<?php echo e(route('purposes.index')); ?>"
+       class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+       <?php echo e(request()->routeIs('purposes.*') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700'); ?>">
+        <i class="fas fa-tasks w-5"></i>
+        <span>Purpose Settings</span>
+    </a>
+</li>
+                        <li>
     <a href="<?php echo e(route('overtime.verified')); ?>"
        class="flex items-center gap-3 p-3 rounded-lg transition duration-200
        <?php echo e(request()->routeIs('overtime.verified') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700'); ?>">

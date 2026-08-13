@@ -95,6 +95,14 @@
                             </a>
                         </li>
                         <li>
+    <a href="{{ route('purposes.index') }}"
+       class="flex items-center gap-3 p-3 rounded-lg transition duration-200
+       {{ request()->routeIs('purposes.*') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700' }}">
+        <i class="fas fa-tasks w-5"></i>
+        <span>Purpose Settings</span>
+    </a>
+</li>
+                        <li>
     <a href="{{ route('overtime.verified') }}"
        class="flex items-center gap-3 p-3 rounded-lg transition duration-200
        {{ request()->routeIs('overtime.verified') ? 'bg-green-600 text-white shadow-md' : 'hover:bg-gray-700' }}">

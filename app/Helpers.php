@@ -1,17 +1,25 @@
 <?php
 
-if (!function_exists('adToBs')) {
-    function adToBs($date) {
-        $dateParts = explode('-', $date);
-        $y = (int)$dateParts[0];
-        $m = (int)$dateParts[1];
-        $d = (int)$dateParts[2];
+use Nilambar\NepaliDate\NepaliDate;
 
-        // यो एउटा सानो Logic हो, यसले एड (AD) मितिलाई बीएस (BS) मा बदल्छ
-        // विस्तृत नेपाली मिति कन्भर्टर लोजिक धेरै लामो हुने भएकोले 
-        // सरल रुपमा प्रयोग गर्न सकिन्छ।
-        
-        // तपाईंको सजिलोको लागि यहाँ एउटा सिम्पल क्याल्कुलेटर लोजिक थप्नुहोस्
-        // वा सजिलोको लागि 'nepali-cal' प्याकेज नै प्रयोग गर्न उत्तम हुन्छ।
+if (!function_exists('adToBs')) {
+    /**
+     * AD date (YYYY-MM-DD) लाई BS मा बदल्ने, "YYYY-MM-DD" फर्काउँछ (BS मा)
+     */
+    function adToBs($date) {
+        if (empty($date)) {
+            return '';
+        }
+
+        $dateParts = explode('-', $date);
+        $y = (int) $dateParts[0];
+        $m = (int) $dateParts[1];
+        $d = (int) $dateParts[2];
+
+        $converter = new NepaliDate();
+        $bs = $converter->convertAdToBs($y, $m, $d);
+
+        // Package ले array फर्काउँछ: ['year' => ..., 'month' => ..., 'day' => ...]
+        return sprintf('%04d-%02d-%02d', $bs['year'], $bs['month'], $bs['day']);
     }
 }
