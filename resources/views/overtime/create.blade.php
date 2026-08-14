@@ -51,7 +51,7 @@
     <label class="block text-gray-700 font-semibold mb-1">Purpose (General OT भए, धेरै दिन चल्ने काम भए मात्र छान्नुहोस्)</label>
     <select name="purpose_id" class="w-full p-2 border rounded">
         <option value="">-- एक दिनको मात्र काम (Purpose चाहिँदैन) --</option>
-        @foreach(\App\Models\Purpose::orderBy('name')->get() as $purpose)
+        @foreach(\App\Models\Purpose::where('is_active', true)->orderBy('id', 'desc')->get() as $purpose)
             <option value="{{ $purpose->id }}">{{ $purpose->name }}</option>
         @endforeach
     </select>

@@ -52,7 +52,7 @@
     <label class="block text-gray-700 font-semibold mb-1">Purpose (General OT भए, धेरै दिन चल्ने काम भए मात्र छान्नुहोस्)</label>
     <select name="purpose_id" class="w-full p-2 border rounded">
         <option value="">-- एक दिनको मात्र काम (Purpose चाहिँदैन) --</option>
-        <?php $__currentLoopData = \App\Models\Purpose::orderBy('name')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $purpose): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <?php $__currentLoopData = \App\Models\Purpose::where('is_active', true)->orderBy('id', 'desc')->get(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $purpose): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <option value="<?php echo e($purpose->id); ?>"><?php echo e($purpose->name); ?></option>
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </select>

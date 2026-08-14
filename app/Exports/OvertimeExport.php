@@ -27,6 +27,10 @@ class OvertimeExport implements FromCollection, WithHeadings
             if (!is_iterable($records)) continue;
 
             foreach ($records as $rec) {
+           $eventDateRange = $rec->event
+                    ? adToBs($rec->event->start_date) . ' - ' . adToBs($rec->event->end_date)
+                    : '-';
+
                 $flattened[] = [
                     'sn'            => $sn++,
                     'date'          => $rec->ot_date ?? 'N/A',
@@ -34,8 +38,10 @@ class OvertimeExport implements FromCollection, WithHeadings
                     'name'          => $rec->employee->name ?? 'N/A',
                     'position'      => $rec->employee->position->name ?? 'N/A',
                     'event'         => $rec->event->event_name ?? ($rec->remarks ?: 'सामान्य (General)'),
+                    'event_dates'   => $eventDateRange,
                     'time'          => ($rec->from_time ?? '0') . ' - ' . ($rec->to_time ?? '0'),
-                    'hours'         => $rec->total_hours ?? 0,
+                    'hours_hm'      => hoursToHm($rec->total_hours ?? 0),
+                    'hours_decimal' => $rec->total_hours ?? 0,
                     'tiffin'        => $rec->tiffin_amount ?? 0,
                 ];
             }
@@ -46,6 +52,6 @@ class OvertimeExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ["सि.नं.", "मिति", "कर्मचारी कोड", "कर्मचारी", "पद", "कार्यक्रम / कारण", "समय", "घण्टा", "खाजा"];
+        return ["सि.नं.", "मिति", "कर्मचारी कोड", "कर्मचारी", "पद", "कार्यक्रम / कारण", "कार्यक्रम मिति", "समय", "घण्टा (HH:MM)", "घण्टा (Decimal)", "खाजा"];
     }
 }

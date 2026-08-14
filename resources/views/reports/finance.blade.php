@@ -33,7 +33,7 @@
                 <label class="block text-xs font-medium text-gray-600 mb-1">कार्यक्रम</label>
                 <select name="event_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
                     <option value="">सबै छान्नुहोस्</option>
-                    @foreach(\App\Models\Event::all() as $event)
+                    @foreach(\App\Models\Event::orderBy('id', 'desc')->get() as $event)
                         <option value="{{ $event->id }}" {{ request('event_id') == $event->id ? 'selected' : '' }}>{{ $event->event_name }}</option>
                     @endforeach
                 </select>
@@ -54,7 +54,8 @@
             <th class="p-3 border">Name</th>
             <th class="p-3 border">पद</th>
             <th class="p-3 border">कार्यक्रम</th>
-            <th class="p-3 border">Total Hours</th>
+            <th class="p-3 border">Total Hours (HH:MM)</th>
+            <th class="p-3 border">Total Hours (Decimal)</th>
             <th class="p-3 border">OT Rate</th>
             <th class="p-3 border">Amount</th>
         </tr>
@@ -67,8 +68,14 @@
             <td class="p-3 border">{{ $data->employee->employee_code ?? '-' }}</td>
             <td class="p-3 border">{{ $data->employee->name ?? 'N/A' }}</td>
             <td class="p-3 border">{{ $data->employee->position->name ?? 'N/A' }}</td>
-            <td class="p-3 border">{{ $data->event->event_name ?? 'N/A' }}</td>
-            <td class="p-3 border text-center">{{ $data->total_hours }}</td>
+            <td class="p-3 border">
+                {{ $data->event->event_name ?? 'N/A' }}
+                @if($data->event)
+                    <br><span class="text-xs text-gray-500">({{ adToBs($data->event->start_date) }} - {{ adToBs($data->event->end_date) }})</span>
+                @endif
+            </td>
+           <td class="p-3 border text-center">{{ hoursToHm($data->total_hours) }}</td>
+            <td class="p-3 border text-center">{{ number_format($data->total_hours, 2) }}</td>
             <td class="p-3 border text-center">{{ $data->employee->position->ot_rate ?? 'N/A' }}</td>
             <td class="p-3 border text-right">
                 रु {{ number_format($data->total_hours * ($data->employee->position->ot_rate ?? 0), 2) }}

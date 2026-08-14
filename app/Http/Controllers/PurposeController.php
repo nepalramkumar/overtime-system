@@ -7,11 +7,20 @@ use Illuminate\Http\Request;
 
 class PurposeController extends Controller
 {
-    public function index()
-    {
-        $purposes = Purpose::orderBy('name')->get();
-        return view('settings.purposes', compact('purposes'));
-    }
+  public function index()
+{
+    $purposes = Purpose::orderBy('id', 'desc')->get();
+    return view('settings.purposes', compact('purposes'));
+}
+
+public function toggleActive($id)
+{
+    $purpose = Purpose::findOrFail($id);
+    $purpose->is_active = !$purpose->is_active;
+    $purpose->save();
+
+    return redirect()->back()->with('success', $purpose->is_active ? 'Purpose Enable गरियो।' : 'Purpose Disable गरियो।');
+}
 
     public function store(Request $request)
     {

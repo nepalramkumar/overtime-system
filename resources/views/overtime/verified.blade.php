@@ -34,7 +34,7 @@
                 <label class="block text-xs font-medium text-gray-600 mb-1">कार्यक्रम</label>
                 <select name="event_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
                     <option value="">सबै छान्नुहोस्</option>
-                    @foreach(\App\Models\Event::all() as $event)
+                    @foreach(\App\Models\Event::orderBy('id', 'desc')->get() as $event)
                         <option value="{{ $event->id }}" {{ request('event_id') == $event->id ? 'selected' : '' }}>{{ $event->event_name }}</option>
                     @endforeach
                 </select>
@@ -75,8 +75,9 @@
                     <td class="px-6 py-4 border">{{ $rec->total_hours }}</td>
                     <td class="px-6 py-4 border">{{ $rec->event->event_name ?? ($rec->remarks ?: 'सामान्य') }}</td>
                     <td class="px-6 py-4 border text-xs">{{ $rec->verifier->name ?? 'N/A' }}</td>
-                    <td class="px-6 py-4 border">
-                        <form action="{{ route('overtime.unverify', $rec->id) }}" method="POST" onsubmit="return confirm('के तपाईं यो रेकर्ड Unverify गर्न चाहनुहुन्छ? यो फेरि Pending मा जान्छ।')">
+                   <td class="px-6 py-4 border">
+                        <a href="{{ route('overtime.print', $rec->id) }}" target="_blank" class="text-purple-600 hover:text-purple-900 font-semibold text-sm mr-2">Print</a>
+                        <form action="{{ route('overtime.unverify', $rec->id) }}" method="POST" class="inline" onsubmit="return confirm('के तपाईं यो रेकर्ड Unverify गर्न चाहनुहुन्छ? यो फेरि Pending मा जान्छ।')">
                             @csrf
                             <button type="submit" class="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 text-sm">Unverify</button>
                         </form>

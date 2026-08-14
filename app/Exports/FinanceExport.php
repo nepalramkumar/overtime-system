@@ -27,13 +27,19 @@ class FinanceExport implements FromCollection, WithHeadings
             $hours = $rec->total_hours ?? 0;
             $rate  = $rec->employee->position->ot_rate ?? 0;
 
+       $eventDateRange = $rec->event
+                ? adToBs($rec->event->start_date) . ' - ' . adToBs($rec->event->end_date)
+                : '-';
+
             $rows[] = [
                 'sn'            => $sn++,
                 'employee_code' => $rec->employee->employee_code ?? '-',
                 'name'          => $rec->employee->name ?? 'N/A',
                 'position'      => $rec->employee->position->name ?? 'N/A',
                 'event'         => $rec->event->event_name ?? 'सामान्य (General)',
-                'hours'         => $hours,
+                'event_dates'   => $eventDateRange,
+                'hours_hm'      => hoursToHm($hours),
+                'hours_decimal' => $hours,
                 'rate'          => $rate,
                 'total_amount'  => round($hours * $rate, 2),
                 'tiffin'        => $rec->total_lunch ?? 0,
@@ -45,6 +51,6 @@ class FinanceExport implements FromCollection, WithHeadings
 
     public function headings(): array
     {
-        return ["सि.नं.", "कर्मचारी कोड", "कर्मचारी", "पद", "कार्यक्रम", "घण्टा", "OT रेट", "जम्मा रकम", "खाजा"];
+        return ["सि.नं.", "कर्मचारी कोड", "कर्मचारी", "पद", "कार्यक्रम", "कार्यक्रम मिति", "घण्टा (HH:MM)", "घण्टा (Decimal)", "OT रेट", "जम्मा रकम", "खाजा"];
     }
 }

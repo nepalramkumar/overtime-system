@@ -42,6 +42,12 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/settings/purposes', [PurposeController::class, 'index'])->middleware('role:events.manage')->name('purposes.index');
 Route::post('/settings/purposes', [PurposeController::class, 'store'])->middleware('role:events.manage')->name('purposes.store');
 Route::delete('/settings/purposes/{id}', [PurposeController::class, 'destroy'])->middleware('role:events.manage')->name('purposes.destroy');
+Route::get('/overtime/{id}/print', [OvertimeController::class, 'printSlip'])->middleware('role:overtime.entry')->name('overtime.print');
+Route::get('/settings/purposes/{id}/print', [OvertimeController::class, 'printPurposeSlip'])->middleware('role:overtime.entry')->name('purposes.print');
+Route::get('/reports/export-pivot', [OvertimeController::class, 'exportPivotExcel'])->middleware('role:reports.view')->name('reports.exportPivot');
+
+Route::post('/events/{id}/toggle', [EventController::class, 'toggleActive'])->middleware('role:events.manage')->name('events.toggle');
+Route::post('/settings/purposes/{id}/toggle', [PurposeController::class, 'toggleActive'])->middleware('role:events.manage')->name('purposes.toggle');
     // Overtime Routes
     Route::get('/overtime/create', [OvertimeController::class, 'create'])->middleware('role:overtime.entry')->name('overtime.create');
     Route::post('/overtime/store', [OvertimeController::class, 'store'])->middleware('role:overtime.entry')->name('overtime.store');
@@ -78,7 +84,7 @@ Route::get('/overtime/verified', [OvertimeController::class, 'verifiedList'])->m
     Route::get('/events/list', [EventController::class, 'index'])->middleware('role:overtime.entry')->name('events.list');
     Route::get('/events/create', [EventController::class, 'create'])->middleware('role:events.manage')->name('events.create');
     Route::post('/events/store', [EventController::class, 'store'])->middleware('role:events.manage')->name('events.store');
-
+Route::get('/events/{id}/print', [OvertimeController::class, 'printEventSlip'])->middleware('role:overtime.entry')->name('events.print');
     // User Management Routes
     Route::get('/users/create', [UserController::class, 'create'])->middleware('role:users.manage')->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->middleware('role:users.manage')->name('users.store');

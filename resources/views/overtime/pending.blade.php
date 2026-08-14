@@ -34,7 +34,7 @@
                 <label class="block text-xs font-medium text-gray-600 mb-1">कार्यक्रम</label>
                 <select name="event_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
                     <option value="">सबै छान्नुहोस्</option>
-                    @foreach(\App\Models\Event::all() as $event)
+                    @foreach(\App\Models\Event::orderBy('id', 'desc')->get() as $event)
                         <option value="{{ $event->id }}" {{ request('event_id') == $event->id ? 'selected' : '' }}>{{ $event->event_name }}</option>
                     @endforeach
                 </select>

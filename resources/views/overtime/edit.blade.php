@@ -46,9 +46,9 @@
                 @if($canSelectAny)
                     <select name="event_id" class="w-full p-2 border rounded">
                         <option value="">-- सामान्य (General) --</option>
-                        @foreach(\App\Models\Event::where('status', 'Active')->get() as $event)
+                        @foreach(\App\Models\Event::where('is_active', true)->orWhere('id', $record->event_id)->orderBy('id', 'desc')->get() as $event)
                             <option value="{{ $event->id }}" {{ $record->event_id == $event->id ? 'selected' : '' }}>
-                                {{ $event->event_name }}
+                                {{ $event->event_name }}{{ !$event->is_active ? ' (Disabled)' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -64,8 +64,8 @@
     <label class="block text-gray-700 font-semibold mb-1">Purpose (General OT भए, धेरै दिन चल्ने काम भए मात्र छान्नुहोस्)</label>
     <select name="purpose_id" class="w-full p-2 border rounded">
         <option value="">-- एक दिनको मात्र काम (Purpose चाहिँदैन) --</option>
-        @foreach(\App\Models\Purpose::orderBy('name')->get() as $purpose)
-            <option value="{{ $purpose->id }}" {{ $record->purpose_id == $purpose->id ? 'selected' : '' }}>{{ $purpose->name }}</option>
+       @foreach(\App\Models\Purpose::where('is_active', true)->orWhere('id', $record->purpose_id)->orderBy('id', 'desc')->get() as $purpose)
+            <option value="{{ $purpose->id }}" {{ $record->purpose_id == $purpose->id ? 'selected' : '' }}>{{ $purpose->name }}{{ !$purpose->is_active ? ' (Disabled)' : '' }}</option>
         @endforeach
     </select>
 </div>

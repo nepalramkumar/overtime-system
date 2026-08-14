@@ -25,7 +25,7 @@
                 <label class="block text-xs font-medium text-gray-600 mb-1">कार्यक्रम</label>
                 <select name="event_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
                     <option value="">सबै छान्नुहोस्</option>
-                    @foreach(\App\Models\Event::all() as $event)
+                    @foreach(\App\Models\Event::orderBy('id', 'desc')->get() as $event)
                         <option value="{{ $event->id }}" {{ request('event_id') == $event->id ? 'selected' : '' }}>{{ $event->event_name }}</option>
                     @endforeach
                 </select>
@@ -55,8 +55,8 @@
             </thead>
             <tbody>
                 @php $sn = 1; @endphp
-                @forelse($records as $rec)
-                <tr class="hover:bg-gray-50">
+               @forelse($records as $rec)
+                <tr class="hover:bg-gray-50 {{ session('highlight_id') == $rec->id ? 'bg-green-50 ring-2 ring-green-400' : '' }}">
                     <td class="p-3 border text-center">{{ $sn++ }}</td>
                     <td class="p-3 border">{{ auth()->user()->employee->employee_code ?? '-' }}</td>
                     <td class="p-3 border">{{ auth()->user()->employee->position->name ?? 'N/A' }}</td>
@@ -77,16 +77,15 @@
                             <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">Pending</span>
                         @endif
                     </td>
-                    <td class="p-3 border">
+                   <td class="p-3 border">
+                        <a href="{{ route('overtime.print', $rec->id) }}" target="_blank" class="text-purple-600 hover:text-purple-900 font-semibold text-sm">Print</a>
                         @if(in_array($rec->status, ['Pending', 'Rejected']))
-                            <a href="{{ route('overtime.edit', $rec->id) }}" class="text-blue-600 hover:text-blue-900 font-semibold text-sm">Edit</a>
+                            <a href="{{ route('overtime.edit', $rec->id) }}" class="text-blue-600 hover:text-blue-900 font-semibold text-sm ml-2">Edit</a>
                             <form action="{{ route('overtime.destroy', $rec->id) }}" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ?')">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-900 font-semibold text-sm ml-2">Delete</button>
                             </form>
-                        @else
-                            <span class="text-gray-400 text-xs">—</span>
                         @endif
                     </td>
                 </tr>

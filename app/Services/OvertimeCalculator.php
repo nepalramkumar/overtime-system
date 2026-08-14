@@ -50,14 +50,14 @@ $isEligible = $event ? (bool)$event->is_tiffin_eligible : false;
             $hours = $totalMinutes / 60;
             $tiffin = $this->calculateTiffin($hours, $isEligible);
             
-            OvertimeRecord::create(array_merge($baseData, [
+          $record = OvertimeRecord::create(array_merge($baseData, [
                 'from_time'     => $from->format('H:i:s'),
                 'to_time'       => $to->format('H:i:s'),
                 'total_hours'   => $hours,
                 'tiffin_amount' => $tiffin,
                 'type'          => 'Holiday'
             ]));
-            return;
+            return $record;
         }
 if (!$employee->position) {
     throw new \Exception("यो कर्मचारीको लागि Position तोकिएको छैन। कृपया पहिले Position assign गर्नुहोस्।");
@@ -102,18 +102,26 @@ if (!$employee->position) {
             throw new \Exception("वैध ओभरटाइम न्यूनतम ६० मिनेट पुगेन।");
         }
         
+   $firstCreatedRecord = null;
+
         foreach ($recordsToCreate as $record) {
             $rowHours = $record['minutes'] / 60;
             $rowTiffinAmount = $this->calculateTiffin($rowHours, $isEligible);
             
-            OvertimeRecord::create(array_merge($baseData, [
+            $created = OvertimeRecord::create(array_merge($baseData, [
                 'from_time'     => $record['from_time'],
                 'to_time'       => $record['to_time'],
                 'total_hours'   => $rowHours,
                 'tiffin_amount' => $rowTiffinAmount,
                 'type'          => $record['type']
             ]));
+
+            if (!$firstCreatedRecord) {
+                $firstCreatedRecord = $created;
+            }
         }
+
+        return $firstCreatedRecord;
     }
 
     private function calculateTiffin($hours, $isEligible)

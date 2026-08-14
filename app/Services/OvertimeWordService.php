@@ -5,203 +5,382 @@ namespace App\Services;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
-use PhpOffice\PhpWord\Style\Font;
 
 class OvertimeWordService
 {
-    // तपाईंको संस्थाको नाम — यहाँ बदल्नुहोस्
-    private $orgName = 'संस्थाको नाम';
+    // तपाईंको संस्थाको जानकारी — यहाँ बदल्नुहोस्
+    private $orgNameLine1 = 'नेपाल';
+    private $orgNameLine2 = 'चार्टर्ड एकाउन्टेन्ट्स संस्था';
+    private $logoPath;
+
+    // आन्तरिक व्यवस्थापन शाखा (सधैं एउटै व्यक्ति भए यहाँ राख्नुहोस्, नभए खाली छोड्नुहोस्)
+    private $verifierName = '';
+    private $verifierPosition = 'अधिकृत';
+
+    public function __construct()
+    {
+        $this->logoPath = public_path('images/logo.jpg');
+    }
 
     protected function newDocument(): PhpWord
     {
         $phpWord = new PhpWord();
-        $phpWord->setDefaultFontName('Kalimati'); // Nepali Unicode font (system मा नभए Mangal/Arial राख्नुहोस्)
+        $phpWord->setDefaultFontName('Nirmala UI');
         $phpWord->setDefaultFontSize(11);
         return $phpWord;
     }
 
-    protected function addHeader($section)
+    // ==========================================
+    // Letterhead: Logo + संस्थाको नाम + divider line
+    // ==========================================
+    protected function addLetterhead($section)
     {
-        $section->addText($this->orgName, ['bold' => true, 'size' => 14], ['alignment' => Jc::CENTER]);
-        $section->addText('आन्तरिक मेमो', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER]);
-        $section->addText('अतिरिक्त समय काम गरेको प्रमाणित फारम', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER]);
+        if (file_exists($this->logoPath)) {
+            $section->addImage($this->logoPath, ['width' => 200, 'height' => 90, 'alignment' => Jc::LEFT]);
+        }
+
+        // पातलो divider line
+        $lineTable = $section->addTable(['cellMargin' => 0]);
+        $lineTable->addRow(20);
+        $lineTable->addCell(9000, ['borderBottomSize' => 4, 'borderBottomColor' => '000000'])->addText('');
+    }
+
+    protected function addTitleBlock($section, $bsDate)
+    {
+        $section->addText('आन्तरिक मेमो', ['bold' => true, 'underline' => 'single', 'size' => 12], ['alignment' => Jc::CENTER]);
+        $section->addText('अतिरिक्त समय कार्य गरेको प्रमाणित फाराम', ['bold' => true, 'size' => 14], ['alignment' => Jc::CENTER]);
+        $section->addTextBreak(1);
+        $section->addText('मिति: ' . $bsDate, [], ['alignment' => Jc::RIGHT]);
+        $section->addTextBreak(1);
+        $section->addText('श्री ................... निर्देशनालय प्रमुख ज्यू,');
+        $section->addTextBreak(1);
+    }
+
+    protected function addIntroGroup($section, $programName)
+    {
+        $section->addText(
+            'देहाय बमोजिमका कर्मचारीहरुले ' . $programName . ' का लागि नियमानुसार आवश्यक पूर्व स्वीकृती लिई उल्लेखित विवरण बमोजिम अतिरिक्त समय कार्य गरेकोले सोको प्रमाणितको लागी पेश गरेको छु।',
+            [], ['alignment' => Jc::BOTH]
+        );
+        $section->addTextBreak(1);
+    }
+
+    protected function addIntroIndividual($section)
+    {
+        $section->addText(
+            'मैले निम्न बमोजिमको कार्य गर्नकोका लागि नियमानुसार आवश्यक पूर्व स्वीकृती लिई उल्लेखित विवरण बमोजिम अतिरिक्त समय कार्य गरेकोले सोको प्रमाणितको लागी पेश गरेको छु।',
+            [], ['alignment' => Jc::BOTH]
+        );
+        $section->addTextBreak(1);
+    }
+
+    // ==========================================
+    // Records लाई employee + लगातार मिति अनुसार Consolidate गर्ने
+    // (उही employee को लगातार मिति भए एउटै row मा "देखि - सम्म")
+    // ==========================================
+    protected function consolidateRanges($records)
+    {
+        // पहिले employee+date अनुसार group (एउटै दिनको Before/After Office जोड्ने)
+        $byEmployeeDate = [];
+        foreach ($records as $rec) {
+            $key = $rec->employee_id . '|' . $rec->ot_date;
+            if (!isset($byEmployeeDate[$key])) {
+                $byEmployeeDate[$key] = [
+                    'employee'  => $rec->employee,
+                    'date'      => $rec->ot_date,
+                    'hours'     => 0,
+                    'tiffin'    => 0,
+                    'label'     => $rec->event->event_name ?? ($rec->purpose->name ?? ($rec->remarks ?: 'सामान्य')),
+                ];
+            }
+            $byEmployeeDate[$key]['hours']  += $rec->total_hours;
+            $byEmployeeDate[$key]['tiffin'] += $rec->tiffin_amount;
+        }
+
+        // Employee अनुसार grouped array बनाउने, date अनुसार sort गर्ने
+        $byEmployee = [];
+        foreach ($byEmployeeDate as $row) {
+            $empId = $row['employee']->id ?? 0;
+            $byEmployee[$empId]['employee'] = $row['employee'];
+            $byEmployee[$empId]['days'][] = $row;
+        }
+
+        $consolidated = [];
+
+        foreach ($byEmployee as $group) {
+            $days = collect($group['days'])->sortBy('date')->values();
+
+            $rangeStart = null;
+            $rangeEnd = null;
+            $rangeHours = 0;
+            $rangeTiffin = 0;
+            $rangeLabel = null;
+            $prevDate = null;
+
+            foreach ($days as $day) {
+                $currentDate = \Carbon\Carbon::parse($day['date']);
+
+                if ($rangeStart === null) {
+                    $rangeStart = $day['date'];
+                    $rangeEnd = $day['date'];
+                    $rangeHours = $day['hours'];
+                    $rangeTiffin = $day['tiffin'];
+                    $rangeLabel = $day['label'];
+                } elseif ($prevDate && $currentDate->diffInDays($prevDate) == 1 && $day['label'] == $rangeLabel) {
+                    // लगातार मिति, उही label — range बढाउने
+                    $rangeEnd = $day['date'];
+                    $rangeHours += $day['hours'];
+                    $rangeTiffin += $day['tiffin'];
+                } else {
+                    // Range टुट्यो — पहिलेको save गरेर नयाँ सुरु
+                    $consolidated[] = [
+                        'employee' => $group['employee'],
+                        'from'     => $rangeStart,
+                        'to'       => $rangeEnd,
+                        'hours'    => $rangeHours,
+                        'tiffin'   => $rangeTiffin,
+                        'label'    => $rangeLabel,
+                    ];
+                    $rangeStart = $day['date'];
+                    $rangeEnd = $day['date'];
+                    $rangeHours = $day['hours'];
+                    $rangeTiffin = $day['tiffin'];
+                    $rangeLabel = $day['label'];
+                }
+
+                $prevDate = $currentDate;
+            }
+
+            if ($rangeStart !== null) {
+                $consolidated[] = [
+                    'employee' => $group['employee'],
+                    'from'     => $rangeStart,
+                    'to'       => $rangeEnd,
+                    'hours'    => $rangeHours,
+                    'tiffin'   => $rangeTiffin,
+                    'label'    => $rangeLabel,
+                ];
+            }
+        }
+
+        return $consolidated;
+    }
+
+    protected function addIndividualTable($section, $records)
+    {
+        $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80];
+        $table = $section->addTable($tableStyle);
+
+        $table->addRow();
+        $headers = ['मिति', 'देखि - सम्म', 'घण्टा', 'मिनेटलाई घण्टामा', 'खाजा', 'काम/Purpose'];
+        foreach ($headers as $h) {
+            $table->addCell(1400)->addText($h, ['bold' => true], ['alignment' => Jc::CENTER]);
+        }
+
+        $totalHours = 0;
+        $totalTiffin = 0;
+
+        foreach ($records as $rec) {
+            $wholeHours = floor($rec->total_hours);
+            $minutes = round(($rec->total_hours - $wholeHours) * 60);
+
+            $table->addRow();
+            $table->addCell(1400)->addText(adToBs($rec->ot_date));
+            $table->addCell(1400)->addText(substr($rec->from_time, 0, 5) . ' - ' . substr($rec->to_time, 0, 5));
+            $table->addCell(1400)->addText($wholeHours . ':' . str_pad($minutes, 2, '0', STR_PAD_LEFT), [], ['alignment' => Jc::CENTER]);
+            $table->addCell(1400)->addText(number_format($rec->total_hours, 2), [], ['alignment' => Jc::CENTER]);
+            $table->addCell(1400)->addText(number_format($rec->tiffin_amount, 2), [], ['alignment' => Jc::CENTER]);
+            $table->addCell(1400)->addText($rec->purpose->name ?? ($rec->remarks ?: '-'));
+
+            $totalHours += $rec->total_hours;
+            $totalTiffin += $rec->tiffin_amount;
+        }
+
+        $table->addRow();
+        $table->addCell(1400)->addText('जम्मा', ['bold' => true]);
+        $table->addCell(1400);
+        $table->addCell(2800, ['gridSpan' => 2])->addText(number_format($totalHours, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
+        $table->addCell(1400)->addText(number_format($totalTiffin, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
+        $table->addCell(1400);
+
+        $section->addTextBreak(1);
+    }
+
+    protected function addMainTable($section, $records, $title)
+    {
+        $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80];
+        $table = $section->addTable($tableStyle);
+
+        $table->addRow();
+        $headers = ['क्र.सं.', 'नाम', 'मिति (देखि - सम्म)', 'पद', 'जम्मा घण्टा', 'खाजा खर्च', 'कैफियत'];
+        $widths  = [700, 1800, 2400, 1400, 1200, 1200, 1500];
+        foreach ($headers as $i => $h) {
+            $table->addCell($widths[$i])->addText($h, ['bold' => true], ['alignment' => Jc::CENTER]);
+        }
+
+        // Employee अनुसार group गर्ने (पुरानो roster तरिका: सबै records जोडेर, पहिलो-अन्तिम मिति range)
+        $employeeGroups = [];
+        foreach ($records as $rec) {
+            $empId = $rec->employee_id;
+            if (!isset($employeeGroups[$empId])) {
+                $employeeGroups[$empId] = [
+                    'employee' => $rec->employee,
+                    'dates'    => [],
+                    'hours'    => 0,
+                    'tiffin'   => 0,
+                ];
+            }
+            $employeeGroups[$empId]['dates'][] = $rec->ot_date;
+            $employeeGroups[$empId]['hours']  += $rec->total_hours;
+            $employeeGroups[$empId]['tiffin'] += $rec->tiffin_amount;
+        }
+
+        $sn = 1;
+
+        foreach ($employeeGroups as $group) {
+            $dates = collect($group['dates'])->sort()->values();
+            $dateRange = adToBs($dates->first());
+            if ($dates->count() > 1) {
+                $dateRange .= ' देखि ' . adToBs($dates->last()) . ' सम्म';
+            }
+
+            $table->addRow();
+            $table->addCell($widths[0])->addText((string) $sn++, [], ['alignment' => Jc::CENTER]);
+            $table->addCell($widths[1])->addText($group['employee']->name ?? 'N/A');
+            $table->addCell($widths[2])->addText($dateRange);
+            $table->addCell($widths[3])->addText($group['employee']->position->name ?? 'N/A');
+            $table->addCell($widths[4])->addText(hoursToHm($group['hours']), [], ['alignment' => Jc::CENTER]);
+            $table->addCell($widths[5])->addText(number_format($group['tiffin'], 2), [], ['alignment' => Jc::CENTER]);
+            $table->addCell($widths[6])->addText($title);
+        }
+
         $section->addTextBreak(1);
     }
 
     protected function addSignatureBlock($section)
     {
-        $section->addTextBreak(1);
-        $section->addText('पेश गर्ने:', ['bold' => true]);
-        $section->addText('नाम: ___________________  पद: ___________________');
-        $section->addText('हस्ताक्षर: ___________________  मिति: ___________________');
-        $section->addTextBreak(1);
-
-        $section->addText('स्वीकृत गर्ने:', ['bold' => true]);
-        $section->addText('नाम: ___________________  पद: ___________________');
-        $section->addText('हस्ताक्षर: ___________________  मिति: ___________________');
+        $section->addText('पेश गर्नेः', ['bold' => true]);
+        $section->addText('नाम: ___________________' . str_repeat(' ', 5) . 'पद: ___________________');
+        $section->addText('दस्तखत: ___________________');
         $section->addTextBreak(1);
 
-        $section->addText('आन्तरिक व्यवस्थापन शाखा:', ['bold' => true]);
-        $section->addText('माथि उल्लेखित कर्मचारीले अतिरिक्त समय काम गरेको व्यहोरा दैनिक हाजिरीको अभिलेखमा भएको प्रमाणित गर्दछु।');
-        $section->addText('नाम: ___________________  पद: ___________________');
-        $section->addText('हस्ताक्षर: ___________________  मिति: ___________________');
+        $section->addText('स्वीकृत गर्नेः', ['bold' => true]);
+        $section->addText('नाम: ___________________' . str_repeat(' ', 5) . 'पद: ___________________');
+        $section->addText('दस्तखत र मिति: ___________________');
         $section->addTextBreak(1);
 
-        $section->addText('निर्देशनालय प्रमुख:', ['bold' => true]);
-        $section->addText('नाम: ___________________');
-        $section->addText('हस्ताक्षर: ___________________  मिति: ___________________');
+        $section->addText(str_repeat('=', 60));
+        $section->addText('आन्तरिक व्यवस्थापन शाखा', ['bold' => true]);
+        $section->addText('माथि उल्लेखित कर्मचारीहरुले उल्लेख गरे बमोजिम समय अतिरिक्त काम गरेको दैनिक हाजिरीका अभिलेखमा छ।');
+        $section->addText('नाम: ' . $this->verifierName);
+        $section->addText('पद: ' . $this->verifierPosition . str_repeat(' ', 15) . 'हस्ताक्षर: ...................' . str_repeat(' ', 10) . 'मिति: ...................');
+        $section->addTextBreak(1);
+
+        $section->addText('निजहरुले माथि उल्लेख गर बमोजिमको अतिरिक्त समय काम गरेको व्यहोरा प्रमाणित गर्दछु।');
+        $section->addText(str_repeat(' ', 40) . 'निर्देशनालय प्रमुख', ['bold' => true]);
+        $section->addText('नाम: ...................');
+        $section->addText('हस्ताक्षर: ...................' . str_repeat(' ', 10) . 'मिति: ...................');
     }
 
+    protected function addDetailPage($section, $records)
+    {
+        $section->addPageBreak();
+        $section->addText('अतिरिक्त समय कार्यको विस्तृत विवरण', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER]);
+        $section->addTextBreak(1);
+
+        $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80];
+        $table = $section->addTable($tableStyle);
+        $table->addRow();
+        $headers = ['नाम', 'मिति', 'देखि - सम्म', 'घण्टा', 'मिनेटलाई घण्टामा', 'खाजा'];
+        foreach ($headers as $h) {
+            $table->addCell(1500)->addText($h, ['bold' => true], ['alignment' => Jc::CENTER]);
+        }
+
+        // Employee अनुसार group गरेर, हरेक group पछि subtotal row
+        $groupedByEmployee = [];
+        foreach ($records as $rec) {
+            $empId = $rec->employee_id;
+            if (!isset($groupedByEmployee[$empId])) {
+                $groupedByEmployee[$empId] = [
+                    'employee' => $rec->employee,
+                    'records'  => [],
+                ];
+            }
+            $groupedByEmployee[$empId]['records'][] = $rec;
+        }
+
+        foreach ($groupedByEmployee as $group) {
+            $subtotalHours = 0;
+            $subtotalTiffin = 0;
+
+            foreach ($group['records'] as $rec) {
+                $table->addRow();
+                $table->addCell(1500)->addText($rec->employee->name ?? 'N/A');
+                $table->addCell(1500)->addText(adToBs($rec->ot_date));
+                $table->addCell(1500)->addText(substr($rec->from_time, 0, 5) . ' - ' . substr($rec->to_time, 0, 5));
+                $table->addCell(1500)->addText(hoursToHm($rec->total_hours), [], ['alignment' => Jc::CENTER]);
+                $table->addCell(1500)->addText(number_format($rec->total_hours, 2), [], ['alignment' => Jc::CENTER]);
+                $table->addCell(1500)->addText(number_format($rec->tiffin_amount, 2), [], ['alignment' => Jc::CENTER]);
+
+                $subtotalHours += $rec->total_hours;
+                $subtotalTiffin += $rec->tiffin_amount;
+            }
+
+            $table->addRow();
+            $table->addCell(4500, ['gridSpan' => 3])->addText(($group['employee']->name ?? 'N/A') . ' - जम्मा', ['bold' => true]);
+            $table->addCell(1500)->addText(hoursToHm($subtotalHours), ['bold' => true], ['alignment' => Jc::CENTER]);
+            $table->addCell(1500)->addText(number_format($subtotalHours, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
+            $table->addCell(1500)->addText(number_format($subtotalTiffin, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
+        }
+    }
+
+    // ==========================================
+    // Individual Format
+    // ==========================================
     public function generateIndividual($records, $employee)
-{
-    $phpWord = $this->newDocument();
-    $section = $phpWord->addSection();
+    {
+        $phpWord = $this->newDocument();
+        $section = $phpWord->addSection(['marginTop' => 150]);
 
-    $this->addHeader($section);
+        $bsToday = adToBs(date('Y-m-d'));
 
-    // कर्मचारी जानकारी
-    $section->addText('कर्मचारीको नाम: ' . ($employee->name ?? 'N/A') . '   दर्जा: ' . ($employee->position->name ?? 'N/A'));
-    $section->addText('शाखा/विभाग: ' . ($employee->department ?? 'N/A'));
-    $section->addTextBreak(1);
+        $this->addLetterhead($section);
+        $this->addTitleBlock($section, $bsToday);
+        $this->addIntroIndividual($section);
 
-    // Table
-    $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80];
-    $table = $section->addTable($tableStyle);
+        $this->addIndividualTable($section, $records);
+        $this->addSignatureBlock($section);
 
-    $table->addRow();
-    $headers = ['मिति', 'देखि - सम्म', 'घण्टा', 'मिनेटलाई घण्टामा', 'खाजा', 'काम/Purpose'];
-    foreach ($headers as $h) {
-        $table->addCell(1400)->addText($h, ['bold' => true], ['alignment' => Jc::CENTER]);
+        if (count($records) > 1) {
+            $this->addDetailPage($section, $records);
+        }
+
+        $filename = 'OT_Slip_' . str_replace(' ', '_', $employee->name) . '_' . date('Ymd') . '.docx';
+        return $this->saveToDownload($phpWord, $filename);
     }
 
-    $totalHours = 0;
-    $totalTiffin = 0;
-
-    foreach ($records as $rec) {
-        $wholeHours = floor($rec->total_hours);
-        $decimalPart = round($rec->total_hours - $wholeHours, 2);
-
-        $table->addRow();
-        $table->addCell(1400)->addText(adToBs($rec->ot_date));
-        $table->addCell(1400)->addText(substr($rec->from_time, 0, 5) . ' - ' . substr($rec->to_time, 0, 5));
-        $table->addCell(1400)->addText((string) $wholeHours, [], ['alignment' => Jc::CENTER]);
-        $table->addCell(1400)->addText(number_format($decimalPart, 2), [], ['alignment' => Jc::CENTER]);
-        $table->addCell(1400)->addText(number_format($rec->tiffin_amount, 2), [], ['alignment' => Jc::CENTER]);
-        $table->addCell(1400)->addText($rec->purpose->name ?? ($rec->remarks ?: '-'));
-
-        $totalHours += $rec->total_hours;
-        $totalTiffin += $rec->tiffin_amount;
-    }
-
-    $table->addRow();
-    $table->addCell(1400)->addText('जम्मा', ['bold' => true]);
-    $table->addCell(1400);
-    $table->addCell(2800, ['gridSpan' => 2])->addText(number_format($totalHours, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
-    $table->addCell(1400)->addText(number_format($totalTiffin, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
-    $table->addCell(1400);
-
-    $this->addSignatureBlock($section);
-
-    $filename = 'OT_Slip_' . str_replace(' ', '_', $employee->name) . '_' . date('Ymd') . '.docx';
-    return $this->saveToDownload($phpWord, $filename);
-}
-
+    // ==========================================
+    // Group Format
+    // ==========================================
     public function generateGroup($records, $title)
-{
-    $phpWord = $this->newDocument();
-    $section = $phpWord->addSection();
+    {
+        $phpWord = $this->newDocument();
+        $section = $phpWord->addSection(['marginTop' => 150]);
 
-    $this->addHeader($section);
-    $section->addText('कार्यक्रम/प्रयोजन: ' . $title, ['bold' => true]);
-    $section->addTextBreak(1);
+        $bsToday = adToBs(date('Y-m-d'));
 
-    // Group by employee
-    $employeeGroups = [];
-    foreach ($records as $rec) {
-        $empId = $rec->employee_id;
-        if (!isset($employeeGroups[$empId])) {
-            $employeeGroups[$empId] = [
-                'employee' => $rec->employee,
-                'records'  => [],
-                'total_hours' => 0,
-                'total_tiffin' => 0,
-            ];
-        }
-        $employeeGroups[$empId]['records'][] = $rec;
-        $employeeGroups[$empId]['total_hours'] += $rec->total_hours;
-        $employeeGroups[$empId]['total_tiffin'] += $rec->tiffin_amount;
+        $this->addLetterhead($section);
+        $this->addTitleBlock($section, $bsToday);
+        $this->addIntroGroup($section, $title);
+
+        $this->addMainTable($section, $records, $title);
+        $this->addSignatureBlock($section);
+
+        $this->addDetailPage($section, $records);
+
+        $filename = 'OT_Group_' . str_replace(' ', '_', $title) . '_' . date('Ymd') . '.docx';
+        return $this->saveToDownload($phpWord, $filename);
     }
-
-    // Roster Table (Summary)
-    $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80];
-    $table = $section->addTable($tableStyle);
-    $table->addRow();
-    $headers = ['क्र.सं.', 'नाम', 'मिति (देखि-सम्म)', 'पद', 'जम्मा घण्टा', 'खाजा खर्च', 'कैफियत'];
-    foreach ($headers as $h) {
-        $table->addCell(1200)->addText($h, ['bold' => true], ['alignment' => Jc::CENTER]);
-    }
-
-    $sn = 1;
-    $grandTotalHours = 0;
-    $grandTotalTiffin = 0;
-
-    foreach ($employeeGroups as $group) {
-        $emp = $group['employee'];
-        $dates = collect($group['records'])->pluck('ot_date')->sort()->values();
-        $dateRange = adToBs($dates->first()) . ($dates->count() > 1 ? ' देखि ' . adToBs($dates->last()) . ' सम्म' : '');
-
-        $table->addRow();
-        $table->addCell(1200)->addText((string) $sn++, [], ['alignment' => Jc::CENTER]);
-        $table->addCell(1200)->addText($emp->name ?? 'N/A');
-        $table->addCell(1200)->addText($dateRange);
-        $table->addCell(1200)->addText($emp->position->name ?? 'N/A');
-        $table->addCell(1200)->addText(number_format($group['total_hours'], 2), [], ['alignment' => Jc::CENTER]);
-        $table->addCell(1200)->addText(number_format($group['total_tiffin'], 2), [], ['alignment' => Jc::CENTER]);
-        $table->addCell(1200)->addText($title);
-
-        $grandTotalHours += $group['total_hours'];
-        $grandTotalTiffin += $group['total_tiffin'];
-    }
-
-    $table->addRow();
-    $table->addCell(3600, ['gridSpan' => 3])->addText('जम्मा', ['bold' => true]);
-    $table->addCell(1200);
-    $table->addCell(1200)->addText(number_format($grandTotalHours, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
-    $table->addCell(1200)->addText(number_format($grandTotalTiffin, 2), ['bold' => true], ['alignment' => Jc::CENTER]);
-    $table->addCell(1200);
-
-    $this->addSignatureBlock($section);
-
-    // हरेक Employee को detailed breakdown (उही page मा, page break बिना)
-    $section->addTextBreak(2);
-    $section->addText('अतिरिक्त समय कार्यको विस्तृत विवरण', ['bold' => true, 'size' => 12], ['alignment' => Jc::CENTER]);
-    $section->addTextBreak(1);
-
-    $detailTable = $section->addTable($tableStyle);
-    $detailTable->addRow();
-    $dHeaders = ['नाम', 'मिति', 'देखि - सम्म', 'घण्टा', 'मिनेटलाई घण्टामा', 'खाजा'];
-    foreach ($dHeaders as $h) {
-        $detailTable->addCell(1500)->addText($h, ['bold' => true], ['alignment' => Jc::CENTER]);
-    }
-
-    foreach ($employeeGroups as $group) {
-        foreach ($group['records'] as $rec) {
-            $wholeHours = floor($rec->total_hours);
-            $decimalPart = round($rec->total_hours - $wholeHours, 2);
-
-            $detailTable->addRow();
-            $detailTable->addCell(1500)->addText($group['employee']->name ?? 'N/A');
-            $detailTable->addCell(1500)->addText(adToBs($rec->ot_date));
-            $detailTable->addCell(1500)->addText(substr($rec->from_time, 0, 5) . ' - ' . substr($rec->to_time, 0, 5));
-            $detailTable->addCell(1500)->addText((string) $wholeHours, [], ['alignment' => Jc::CENTER]);
-            $detailTable->addCell(1500)->addText(number_format($decimalPart, 2), [], ['alignment' => Jc::CENTER]);
-            $detailTable->addCell(1500)->addText(number_format($rec->tiffin_amount, 2), [], ['alignment' => Jc::CENTER]);
-        }
-    }
-
-    $filename = 'OT_Group_' . str_replace(' ', '_', $title) . '_' . date('Ymd') . '.docx';
-    return $this->saveToDownload($phpWord, $filename);
-}
 
     protected function saveToDownload(PhpWord $phpWord, string $filename)
     {

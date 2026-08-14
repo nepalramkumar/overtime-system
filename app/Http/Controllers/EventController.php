@@ -8,11 +8,20 @@ use App\Models\Event;
 class EventController extends Controller
 {
     // इभेन्ट लिस्ट हेर्नको लागि
-    public function index() {
-        $events = Event::all();
+  public function index()
+{
+    $events = Event::orderBy('id', 'desc')->get();
+    return view('events.index', compact('events'));
+}
 
-        return view('events.index', compact('events'));
-    }
+public function toggleActive($id)
+{
+    $event = Event::findOrFail($id);
+    $event->is_active = !$event->is_active;
+    $event->save();
+
+    return redirect()->back()->with('success', $event->is_active ? 'Event Enable गरियो।' : 'Event Disable गरियो।');
+}
 
     // इभेन्ट दर्ता गर्ने फर्म देखाउनको लागि
     public function create() {

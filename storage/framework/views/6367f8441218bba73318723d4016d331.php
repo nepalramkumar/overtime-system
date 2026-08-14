@@ -13,17 +13,36 @@
 
         <table class="w-full border-collapse border border-gray-200 mb-8">
             <thead class="bg-gray-100">
-                <tr>
+               <tr>
                     <th class="border p-2 text-left">Purpose नाम</th>
-                    <th class="border p-2 w-24">कार्य</th>
+                    <th class="border p-2">Status</th>
+                    <th class="border p-2 w-48">कार्य</th>
                 </tr>
             </thead>
             <tbody>
                 <?php $__empty_1 = true; $__currentLoopData = $purposes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                <tr>
+              <tr class="<?php echo e(!$item->is_active ? 'bg-gray-100 opacity-60' : ''); ?>">
                     <td class="border p-2"><?php echo e($item->name); ?></td>
                     <td class="border p-2 text-center">
-                        <form action="<?php echo e(route('purposes.destroy', $item->id)); ?>" method="POST" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
+                        <?php if($item->is_active): ?>
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Active</span>
+                        <?php else: ?>
+                            <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">Disabled</span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="border p-2 text-center">
+                        <a href="<?php echo e(route('purposes.print', $item->id)); ?>" target="_blank"
+                           class="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 text-sm inline-block mb-1">
+                            Print
+                        </a>
+                        <form action="<?php echo e(route('purposes.toggle', $item->id)); ?>" method="POST" class="inline" onsubmit="return confirm('के तपाईं यो Purpose को Status बदल्न चाहनुहुन्छ?')">
+                            <?php echo csrf_field(); ?>
+                            <button type="submit" class="<?php echo e($item->is_active ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-600 hover:bg-green-700'); ?> text-white px-3 py-1 rounded text-sm">
+                                <?php echo e($item->is_active ? 'Disable' : 'Enable'); ?>
+
+                            </button>
+                        </form>
+                        <form action="<?php echo e(route('purposes.destroy', $item->id)); ?>" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
                             <?php echo csrf_field(); ?>
                             <?php echo method_field('DELETE'); ?>
                             <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">Delete</button>
