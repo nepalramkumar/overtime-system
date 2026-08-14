@@ -119,10 +119,11 @@ public function create(Request $request)
             'purpose_id' => $request->purpose_id,
         ];
 
-       $newRecord = $this->calculator->calculateAndSave($additionalData, $employee);
-        return redirect()->route('overtime.my')
-            ->with('success', 'ओभरटाइम विवरण सफलतापूर्वक दर्ता भयो।')
-            ->with('highlight_id', $newRecord->id);
+      $newRecord = $this->calculator->calculateAndSave($additionalData, $employee);
+return redirect()->route('overtime.my')
+    ->with('success', 'ओभरटाइम विवरण सफलतापूर्वक दर्ता भयो।')
+    ->with('highlight_id', $newRecord->id)
+    ->with('last_event_id', $newRecord->event_id);
     } catch (Exception $e) {
         return redirect()->back()->withInput()->with('error', $e->getMessage());
     }

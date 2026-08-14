@@ -44,7 +44,10 @@
         
         <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-md">
             <input type="checkbox" name="is_tiffin_eligible" value="1" class="w-5 h-5 text-blue-600">
-            <label class="text-sm font-medium text-gray-700">यो कार्यक्रममा खाजा खर्च दिने हो?</label>
+            <label class="text-sm font-medium text-gray-700">
+                यस कार्यक्रमको OT दाबी गर्दा खाजा खर्च गणना गर्ने हो?
+                
+            </label>
         </div>
         
         <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition">

@@ -18,7 +18,7 @@ if (!empty($data['event_id'])) {
     $event = Event::find($data['event_id']);
 }
 
-$isEligible = $event ? (bool)$event->is_tiffin_eligible : false;
+$isEligible = $event ? (bool)$event->is_tiffin_eligible : true;
         //filter_var($data['is_tiffin_eligible'] ?? true, FILTER_VALIDATE_BOOLEAN);
         
         $from = Carbon::parse($otDate . ' ' . $data['from_time']);
@@ -124,9 +124,9 @@ if (!$employee->position) {
         return $firstCreatedRecord;
     }
 
-    private function calculateTiffin($hours, $isEligible)
+private function calculateTiffin($hours, $isEligible)
 {
-    if ($isEligible) {
+    if (!$isEligible) {
         return 0;
     }
 

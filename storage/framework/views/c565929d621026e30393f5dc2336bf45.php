@@ -4,8 +4,17 @@
 <div class="p-6">
     <h2 class="text-2xl font-bold mb-4 text-gray-800">मेरो OT Records</h2>
 
-    <?php if(session('success')): ?>
-        <div class="bg-green-100 text-green-700 p-3 rounded mb-4"><?php echo e(session('success')); ?></div>
+   <?php if(session('success')): ?>
+        <div class="bg-green-100 text-green-700 p-3 rounded mb-4">
+            <?php echo e(session('success')); ?>
+
+            <?php if(session('last_event_id')): ?>
+                <a href="<?php echo e(route('overtime.create', ['event_id' => session('last_event_id')])); ?>"
+                   class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold ml-3 hover:bg-blue-700">
+                    यही कार्यक्रममा अर्को Entry थप्नुहोस्
+                </a>
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
     <?php if(session('error')): ?>
         <div class="bg-red-100 text-red-700 p-3 rounded mb-4"><?php echo e(session('error')); ?></div>

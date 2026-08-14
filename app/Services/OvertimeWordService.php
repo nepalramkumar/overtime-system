@@ -33,17 +33,19 @@ class OvertimeWordService
     // ==========================================
     // Letterhead: Logo + संस्थाको नाम + divider line
     // ==========================================
-    protected function addLetterhead($section)
-    {
-        if (file_exists($this->logoPath)) {
-            $section->addImage($this->logoPath, ['width' => 200, 'height' => 90, 'alignment' => Jc::LEFT]);
-        }
+protected function addLetterhead($section)
+{
+    $table = $section->addTable(['cellMargin' => 0]);
+    $table->addRow();
+    $cell = $table->addCell(9000, [
+        'borderBottomSize' => 4,
+        'borderBottomColor' => 'C8102E',
+    ]);
 
-        // पातलो divider line
-        $lineTable = $section->addTable(['cellMargin' => 0]);
-        $lineTable->addRow(20);
-        $lineTable->addCell(9000, ['borderBottomSize' => 4, 'borderBottomColor' => '000000'])->addText('');
+    if (file_exists($this->logoPath)) {
+        $cell->addImage($this->logoPath, ['width' => 200, 'height' => 90]);
     }
+}
 
     protected function addTitleBlock($section, $bsDate)
     {
@@ -269,7 +271,7 @@ class OvertimeWordService
         $section->addText('दस्तखत र मिति: ___________________');
         $section->addTextBreak(1);
 
-        $section->addText(str_repeat('=', 60));
+        $section->addText(str_repeat('=', 55));
         $section->addText('आन्तरिक व्यवस्थापन शाखा', ['bold' => true]);
         $section->addText('माथि उल्लेखित कर्मचारीहरुले उल्लेख गरे बमोजिम समय अतिरिक्त काम गरेको दैनिक हाजिरीका अभिलेखमा छ।');
         $section->addText('नाम: ' . $this->verifierName);
@@ -340,7 +342,7 @@ class OvertimeWordService
     public function generateIndividual($records, $employee)
     {
         $phpWord = $this->newDocument();
-        $section = $phpWord->addSection(['marginTop' => 150]);
+        $section = $phpWord->addSection(['marginTop' => 15]);
 
         $bsToday = adToBs(date('Y-m-d'));
 
@@ -365,7 +367,7 @@ class OvertimeWordService
     public function generateGroup($records, $title)
     {
         $phpWord = $this->newDocument();
-        $section = $phpWord->addSection(['marginTop' => 150]);
+       $section = $phpWord->addSection(['marginTop' => 15]);
 
         $bsToday = adToBs(date('Y-m-d'));
 
