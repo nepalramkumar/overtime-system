@@ -22,7 +22,9 @@ if (!function_exists('adToBs')) {
         // Package ले array फर्काउँछ: ['year' => ..., 'month' => ..., 'day' => ...]
         return sprintf('%04d-%02d-%02d', $bs['year'], $bs['month'], $bs['day']);
     }
-    if (!function_exists('hoursToHm')) {
+}
+
+if (!function_exists('hoursToHm')) {
     function hoursToHm($totalHours)
     {
         $wholeHours = floor($totalHours);
@@ -34,4 +36,21 @@ if (!function_exists('adToBs')) {
         return $wholeHours . ':' . str_pad($minutes, 2, '0', STR_PAD_LEFT);
     }
 }
+
+if (!function_exists('userCan')) {
+    /**
+     * Login भएको user लाई दिइएको permission छ कि छैन जाँच्ने (Admin सधैं bypass)।
+     * Menu/UI मा link देखाउने/लुकाउने निर्णय गर्न प्रयोग हुन्छ।
+     */
+    function userCan($permission) {
+        if (!auth()->check()) {
+            return false;
+        }
+        if (auth()->user()->role === 'admin') {
+            return true;
+        }
+        return \App\Models\RolePermission::where('role', auth()->user()->role)
+                ->where('permission', $permission)
+                ->exists();
+    }
 }
