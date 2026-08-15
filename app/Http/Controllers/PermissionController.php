@@ -18,6 +18,10 @@ class PermissionController extends Controller
     'overtime.verify'   => 'OT verify/reject गर्ने',
     'overtime.unverify' => 'Verified लाई फेरि Pending बनाउने',
     'reports.view'      => 'Report हेर्ने/Export गर्ने',
+    'petrol.bills.manage'  => 'Petrol Bill व्यवस्थापन (Create/Edit/Delete)',
+'petrol.bills.view'    => 'Petrol Bill हेर्ने',
+'petrol.months.manage' => 'Petrol Month व्यवस्थापन',
+
 ];
 
     private $roles = ['manager', 'employee', 'account'];

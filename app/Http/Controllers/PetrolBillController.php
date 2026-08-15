@@ -1,0 +1,178 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Employee;
+use App\Models\PetrolBill;
+use App\Models\PetrolMonth;
+use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+class PetrolBillController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = PetrolBill::with(['employee.position', 'month']);
+
+        if ($request->filled('petrol_month_id')) {
+            $query->where('petrol_month_id', $request->petrol_month_id);
+        }
+
+        $bills = $query->orderBy('created_at', 'desc')->paginate(20);
+        $months = PetrolMonth::orderBy('id', 'desc')->get();
+
+        return view('petrol.bills.index', compact('bills', 'months'));
+    }
+
+    public function create()
+    {
+        $employees = Employee::orderBy('name')->get();
+        $months = PetrolMonth::orderBy('id', 'desc')->get();
+
+        return view('petrol.bills.form', [
+            'employees' => $employees,
+            'months'    => $months,
+            'bill'      => null,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_id'    => 'required|exists:employees,id',
+            'petrol_month_id'=> 'required|exists:petrol_months,id',
+            'date'           => 'required|array',
+            'quantity'       => 'required|array',
+            'rate'           => 'required|array',
+            'amount'         => 'required|array',
+            'remarks'        => 'nullable|string',
+        ]);
+
+        $exists = PetrolBill::where('employee_id', $validated['employee_id'])
+            ->where('petrol_month_id', $validated['petrol_month_id'])
+            ->exists();
+
+        if ($exists) {
+            return redirect()->back()->withInput()->with('error', 'यो कर्मचारीको यो Month को Bill पहिले नै दर्ता भइसकेको छ।');
+        }
+
+        $employee = Employee::findOrFail($validated['employee_id']);
+        $totalQuantity = collect($validated['quantity'])->map(fn($q) => (float) $q)->sum();
+
+        if ($totalQuantity > $employee->petrol_quantity_limit) {
+            return redirect()->back()->withInput()->with('error', 'Quantity Limit (' . $employee->petrol_quantity_limit . ' लिटर) भन्दा बढी भयो।');
+        }
+
+        $totalAmount = collect($validated['amount'])->map(fn($a) => (float) $a)->sum();
+
+        PetrolBill::create([
+            'employee_id'     => $validated['employee_id'],
+            'petrol_month_id' => $validated['petrol_month_id'],
+            'date'            => $validated['date'],
+            'quantity'        => $validated['quantity'],
+            'rate'            => $validated['rate'],
+            'amount'          => $validated['amount'],
+            'total_quantity'  => $totalQuantity,
+            'total_amount'    => $totalAmount,
+            'remarks'         => $validated['remarks'] ?? null,
+            'isEdit'          => true,
+        ]);
+
+        return redirect()->route('petrol.bills.index')->with('success', 'Petrol Bill सफलतापूर्वक दर्ता भयो।');
+    }
+
+    public function edit($id)
+    {
+        $bill = PetrolBill::with(['employee', 'month'])->findOrFail($id);
+
+        if (!$this->canEdit($bill)) {
+            return redirect()->route('petrol.bills.index')->with('error', 'यो Bill Edit गर्न अनुमति छैन। Admin/Manager लाई सम्पर्क गर्नुहोस्।');
+        }
+
+        $employees = Employee::orderBy('name')->get();
+        $months = PetrolMonth::orderBy('id', 'desc')->get();
+
+        return view('petrol.bills.form', compact('bill', 'employees', 'months'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $bill = PetrolBill::findOrFail($id);
+
+        if (!$this->canEdit($bill)) {
+            return redirect()->route('petrol.bills.index')->with('error', 'यो Bill Edit गर्न अनुमति छैन।');
+        }
+
+        $validated = $request->validate([
+            'date'     => 'required|array',
+            'quantity' => 'required|array',
+            'rate'     => 'required|array',
+            'amount'   => 'required|array',
+            'remarks'  => 'nullable|string',
+        ]);
+
+        $employee = $bill->employee;
+        $totalQuantity = collect($validated['quantity'])->map(fn($q) => (float) $q)->sum();
+
+        if ($totalQuantity > $employee->petrol_quantity_limit) {
+            return redirect()->back()->withInput()->with('error', 'Quantity Limit (' . $employee->petrol_quantity_limit . ' लिटर) भन्दा बढी भयो।');
+        }
+
+        $totalAmount = collect($validated['amount'])->map(fn($a) => (float) $a)->sum();
+
+        $bill->update([
+            'date'           => $validated['date'],
+            'quantity'       => $validated['quantity'],
+            'rate'           => $validated['rate'],
+            'amount'         => $validated['amount'],
+            'total_quantity' => $totalQuantity,
+            'total_amount'   => $totalAmount,
+            'remarks'        => $validated['remarks'] ?? null,
+        ]);
+
+        return redirect()->route('petrol.bills.index')->with('success', 'Petrol Bill अपडेट भयो।');
+    }
+
+    public function destroy($id)
+    {
+        $bill = PetrolBill::findOrFail($id);
+        $bill->delete();
+        return redirect()->back()->with('success', 'Petrol Bill Delete भयो।');
+    }
+
+    // Admin/Manager ले हरेक entry को Edit permission toggle गर्ने (isEdit flag)
+    public function toggleEditPermission($id)
+    {
+        $bill = PetrolBill::findOrFail($id);
+        $bill->isEdit = !$bill->isEdit;
+        $bill->save();
+
+        return redirect()->back()->with('success', 'Edit अनुमति ' . ($bill->isEdit ? 'खुला' : 'बन्द') . ' गरियो।');
+    }
+
+    protected function canEdit(PetrolBill $bill)
+    {
+        // Admin/Manager (petrol.bills.manage भएको) लाई सधैं अनुमति; अरूलाई isEdit flag अनुसार मात्र
+        if (auth()->user()->role === 'admin') {
+            return true;
+        }
+
+        $hasManagePermission = \App\Models\RolePermission::where('role', auth()->user()->role)
+            ->where('permission', 'petrol.bills.manage')
+            ->exists();
+
+        if ($hasManagePermission) {
+            return true;
+        }
+
+        return (bool) $bill->isEdit;
+    }
+
+    public function printBill($id)
+    {
+        $bill = PetrolBill::with(['employee.position', 'month'])->findOrFail($id);
+
+        $pdf = Pdf::loadView('petrol.bills.pdf', ['bill' => $bill])->setPaper('a4');
+        return $pdf->download('Petrol_Bill_' . str_replace(' ', '_', $bill->employee->name) . '_' . $bill->month->month . '_' . $bill->month->year . '.pdf');
+    }
+}
