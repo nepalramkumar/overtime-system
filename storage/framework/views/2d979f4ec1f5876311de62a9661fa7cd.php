@@ -102,8 +102,8 @@
                     </ul>
                 </div>
 
-                <!-- Petrol -->
-                <?php if(userCan('petrol.bills.view') || userCan('petrol.months.manage')): ?>
+               <!-- Petrol -->
+                <?php if(userCan('petrol.bills.view') || userCan('petrol.months.manage') || userCan('repair.expenses.view')): ?>
                 <div class="mb-5" x-data="{ open: true }">
                     <button @click="open = !open" class="w-full flex items-center justify-between px-3 mb-2 text-xs uppercase text-gray-400 font-semibold tracking-wider">
                         <span>Petrol</span>
@@ -127,6 +127,16 @@
                                <?php echo e(request()->routeIs('petrol.months.*') ? 'bg-orange-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'); ?>">
                                 <i class="fas fa-calendar-alt w-5 text-center"></i>
                                 <span>Petrol Months</span>
+                            </a>
+                        </li>
+                        <?php endif; ?>
+                        <?php if(userCan('repair.expenses.view')): ?>
+                        <li>
+                            <a href="<?php echo e(route('repair.expenses.index')); ?>"
+                               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150 text-sm font-medium
+                               <?php echo e(request()->routeIs('repair.expenses.*') ? 'bg-orange-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'); ?>">
+                                <i class="fas fa-wrench w-5 text-center"></i>
+                                <span>Repair Expenses</span>
                             </a>
                         </li>
                         <?php endif; ?>
