@@ -38,4 +38,59 @@ class EmployeeController extends Controller
 
         return redirect()->route('employees.index')->with('success', 'कर्मचारी सफलतापूर्वक दर्ता भयो!');
     }
+
+    // कर्मचारीको विवरण Edit गर्ने फारम (Vehicle No / Petrol Quantity Limit यहीँबाट अपडेट हुन्छ)
+    public function edit($id)
+    {
+        $employee = Employee::findOrFail($id);
+        $positions = Position::where('is_active', true)->get();
+        return view('employees.edit', compact('employee', 'positions'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $employee = Employee::findOrFail($id);
+
+        $request->validate([
+            'name'                  => 'required|string|max:255',
+            'employee_code'         => 'required|string|unique:employees,employee_code,' . $employee->id,
+            'department'            => 'required',
+            'position_id'           => 'required|exists:positions,id',
+            'vehicle_no'            => 'nullable|string|max:50',
+            'petrol_quantity_limit' => 'nullable|integer|min:0',
+            'repair_expense_limit'  => 'nullable|integer|min:0',
+        ]);
+
+        $employee->update($request->only([
+            'name', 'employee_code', 'department', 'position_id',
+            'vehicle_no', 'petrol_quantity_limit', 'repair_expense_limit',
+        ]));
+
+        return redirect()->route('employees.index')->with('success', 'कर्मचारीको विवरण अपडेट भयो।');
+    }
+
+    public function destroy($id)
+    {
+        $employee = Employee::findOrFail($id);
+        $employee->delete();
+        return redirect()->route('employees.index')->with('success', 'कर्मचारी Delete भयो।');
+    }
+
+    // Logged-in employee ले आफ्नो मात्र Vehicle No अपडेट गर्ने (Profile पेजबाट)
+    public function updateOwnVehicle(Request $request)
+    {
+        $employee = auth()->user()->employee;
+
+        if (!$employee) {
+            return redirect()->route('profile.edit')->with('error', 'तपाईंसँग Employee प्रोफाइल जोडिएको छैन।');
+        }
+
+        $request->validate([
+            'vehicle_no' => 'nullable|string|max:50',
+        ]);
+
+        $employee->update(['vehicle_no' => $request->vehicle_no]);
+
+        return redirect()->route('profile.edit')->with('status', 'vehicle-updated');
+    }
 }

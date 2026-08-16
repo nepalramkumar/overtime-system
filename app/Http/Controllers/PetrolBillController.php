@@ -27,7 +27,8 @@ class PetrolBillController extends Controller
     public function create()
     {
         $employees = Employee::orderBy('name')->get();
-        $months = PetrolMonth::orderBy('id', 'desc')->get();
+        // Disable गरिएका Month नयाँ Bill entry मा नदेखियोस्
+        $months = PetrolMonth::active()->orderBy('id', 'desc')->get();
 
         return view('petrol.bills.form', [
             'employees' => $employees,
@@ -48,6 +49,15 @@ class PetrolBillController extends Controller
             'remarks'        => 'nullable|string',
         ]);
 
+        $employee = Employee::findOrFail($validated['employee_id']);
+
+        // Vehicle No नभएको employee को Petrol Bill दर्ता गर्न नमिल्ने
+        if (empty($employee->vehicle_no)) {
+            return redirect()->back()->withInput()->with('error', 'यस कर्मचारी (' . $employee->name . ') को Vehicle No अद्यावधिक गरिएको छैन। Petrol Bill दर्ता गर्नुअघि Vehicle No थप्नुहोस्।')
+                ->with('vehicle_missing_employee_id', $employee->id)
+                ->with('vehicle_missing_employee_name', $employee->name);
+        }
+
         $exists = PetrolBill::where('employee_id', $validated['employee_id'])
             ->where('petrol_month_id', $validated['petrol_month_id'])
             ->exists();
@@ -56,7 +66,6 @@ class PetrolBillController extends Controller
             return redirect()->back()->withInput()->with('error', 'यो कर्मचारीको यो Month को Bill पहिले नै दर्ता भइसकेको छ।');
         }
 
-        $employee = Employee::findOrFail($validated['employee_id']);
         $totalQuantity = collect($validated['quantity'])->map(fn($q) => (float) $q)->sum();
 
         if ($totalQuantity > $employee->petrol_quantity_limit) {

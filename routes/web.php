@@ -12,6 +12,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PurposeController;
 use App\Http\Controllers\PetrolBillController;
 use App\Http\Controllers\PetrolMonthController;
+use App\Http\Controllers\RepairExpenseController;
 
 // स्वागत पेज (Public)
 Route::get('/', function () {
@@ -139,6 +140,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/petrol/months', [PetrolMonthController::class, 'index'])->middleware('role:petrol.months.manage')->name('petrol.months.index');
     Route::post('/petrol/months', [PetrolMonthController::class, 'store'])->middleware('role:petrol.months.manage')->name('petrol.months.store');
     Route::delete('/petrol/months/{id}', [PetrolMonthController::class, 'destroy'])->middleware('role:petrol.months.manage')->name('petrol.months.destroy');
+    Route::post('/petrol/months/{id}/toggle-status', [PetrolMonthController::class, 'toggleStatus'])->middleware('role:petrol.months.manage')->name('petrol.months.toggleStatus');
 
     // ------------------------------------------
     // Petrol Bill Routes
@@ -151,5 +153,21 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/petrol/bills/{id}', [PetrolBillController::class, 'destroy'])->middleware('role:petrol.bills.manage')->name('petrol.bills.destroy');
     Route::post('/petrol/bills/{id}/toggle-edit', [PetrolBillController::class, 'toggleEditPermission'])->middleware('role:petrol.bills.manage')->name('petrol.bills.toggleEdit');
     Route::get('/petrol/bills/{id}/print', [PetrolBillController::class, 'printBill'])->middleware('role:petrol.bills.view')->name('petrol.bills.print');
+
+    // ------------------------------------------
+    // Repair Expense Routes
+    // ------------------------------------------
+    Route::get('/repair/expenses', [RepairExpenseController::class, 'index'])->middleware('role:repair.expenses.view')->name('repair.expenses.index');
+    Route::get('/repair/expenses/create', [RepairExpenseController::class, 'create'])->middleware('role:repair.expenses.manage')->name('repair.expenses.create');
+    Route::post('/repair/expenses', [RepairExpenseController::class, 'store'])->middleware('role:repair.expenses.manage')->name('repair.expenses.store');
+    Route::get('/repair/expenses/{id}/edit', [RepairExpenseController::class, 'edit'])->middleware('role:repair.expenses.view')->name('repair.expenses.edit');
+    Route::put('/repair/expenses/{id}', [RepairExpenseController::class, 'update'])->middleware('role:repair.expenses.view')->name('repair.expenses.update');
+    Route::delete('/repair/expenses/{id}', [RepairExpenseController::class, 'destroy'])->middleware('role:repair.expenses.manage')->name('repair.expenses.destroy');
+    Route::post('/repair/expenses/{id}/toggle-edit', [RepairExpenseController::class, 'toggleEditPermission'])->middleware('role:repair.expenses.manage')->name('repair.expenses.toggleEdit');
+
+    // ------------------------------------------
+    // आफ्नो Vehicle No अपडेट गर्ने (Profile पेजबाट, जोसुकै logged-in employee ले आफ्नै मात्र)
+    // ------------------------------------------
+    Route::patch('/profile/vehicle', [EmployeeController::class, 'updateOwnVehicle'])->name('profile.vehicle.update');
 
 });

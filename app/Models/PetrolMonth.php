@@ -17,4 +17,10 @@ class PetrolMonth extends Model
     {
         return $this->hasMany(PetrolBill::class, 'petrol_month_id');
     }
+
+    // Enabled (status=1) भएका Month मात्र (नयाँ Bill entry गर्दा dropdown मा देखाउन)
+    public function scopeActive($query)
+    {
+        return $query->where('status', 1);
+    }
 }

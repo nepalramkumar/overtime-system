@@ -16,7 +16,8 @@
             <tr>
                 <th class="border p-2 text-left">Month</th>
                 <th class="border p-2 text-left">Year</th>
-                <th class="border p-2 w-24">कार्य</th>
+                <th class="border p-2 text-center w-28">Status</th>
+                <th class="border p-2 text-center w-40">कार्य</th>
             </tr>
         </thead>
         <tbody>
@@ -25,15 +26,30 @@
                 <td class="border p-2">{{ $item->month }}</td>
                 <td class="border p-2">{{ $item->year }}</td>
                 <td class="border p-2 text-center">
-                    <form action="{{ route('petrol.months.destroy', $item->id) }}" method="POST" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">Delete</button>
-                    </form>
+                    @if($item->status)
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Enabled</span>
+                    @else
+                        <span class="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs font-semibold">Disabled</span>
+                    @endif
+                </td>
+                <td class="border p-2 text-center">
+                    <div class="flex justify-center gap-2">
+                        <form action="{{ route('petrol.months.toggleStatus', $item->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="px-3 py-1 rounded text-sm text-white {{ $item->status ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700' }}">
+                                {{ $item->status ? 'Disable' : 'Enable' }}
+                            </button>
+                        </form>
+                        <form action="{{ route('petrol.months.destroy', $item->id) }}" method="POST" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">Delete</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             @empty
-            <tr><td colspan="3" class="text-center p-4 text-gray-500">कुनै Month थपिएको छैन।</td></tr>
+            <tr><td colspan="4" class="text-center p-4 text-gray-500">कुनै Month थपिएको छैन।</td></tr>
             @endforelse
         </tbody>
     </table>
@@ -44,11 +60,16 @@
             @csrf
             <select name="month" class="border p-2 w-full" required>
                 <option value="">-- महिना छान्नुहोस् --</option>
-                @foreach(['Baishakh','Jestha','Ashad','Shrawan','Bhadra','Ashwin','Kartik','Mangsir','Poush','Magh','Falgun','Chaitra'] as $m)
-                    <option value="{{ $m }}">{{ $m }}</option>
+                @foreach($bsMonths as $m)
+                    <option value="{{ $m }}" {{ old('month') == $m ? 'selected' : '' }}>{{ $m }}</option>
                 @endforeach
             </select>
-            <input type="text" name="year" placeholder="जस्तै: 2083" class="border p-2 w-full" required>
+            <select name="year" class="border p-2 w-full" required>
+                <option value="">-- वर्ष छान्नुहोस् --</option>
+                @foreach($yearOptions as $y)
+                    <option value="{{ $y }}" {{ old('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
+                @endforeach
+            </select>
             <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 whitespace-nowrap">थप्नुहोस्</button>
         </form>
     </div>

@@ -23,7 +23,15 @@ class Employee extends Model
         'external_staff_id',
         'position_id',
         'last_synced_at',
+        'vehicle_no',
+        'petrol_quantity_limit',
+        'repair_expense_limit',
     ];
+
+    public function repairExpenses()
+    {
+        return $this->hasMany(RepairExpense::class, 'employee_id');
+    }
 
     public function user()
     {

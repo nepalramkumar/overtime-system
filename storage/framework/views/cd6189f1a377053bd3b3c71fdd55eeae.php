@@ -14,7 +14,8 @@
             <tr>
                 <th class="border p-2 text-left">Month</th>
                 <th class="border p-2 text-left">Year</th>
-                <th class="border p-2 w-24">कार्य</th>
+                <th class="border p-2 text-center w-28">Status</th>
+                <th class="border p-2 text-center w-40">कार्य</th>
             </tr>
         </thead>
         <tbody>
@@ -23,15 +24,31 @@
                 <td class="border p-2"><?php echo e($item->month); ?></td>
                 <td class="border p-2"><?php echo e($item->year); ?></td>
                 <td class="border p-2 text-center">
-                    <form action="<?php echo e(route('petrol.months.destroy', $item->id)); ?>" method="POST" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
-                        <?php echo csrf_field(); ?>
-                        <?php echo method_field('DELETE'); ?>
-                        <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">Delete</button>
-                    </form>
+                    <?php if($item->status): ?>
+                        <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">Enabled</span>
+                    <?php else: ?>
+                        <span class="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs font-semibold">Disabled</span>
+                    <?php endif; ?>
+                </td>
+                <td class="border p-2 text-center">
+                    <div class="flex justify-center gap-2">
+                        <form action="<?php echo e(route('petrol.months.toggleStatus', $item->id)); ?>" method="POST">
+                            <?php echo csrf_field(); ?>
+                            <button type="submit" class="px-3 py-1 rounded text-sm text-white <?php echo e($item->status ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700'); ?>">
+                                <?php echo e($item->status ? 'Disable' : 'Enable'); ?>
+
+                            </button>
+                        </form>
+                        <form action="<?php echo e(route('petrol.months.destroy', $item->id)); ?>" method="POST" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
+                            <?php echo csrf_field(); ?>
+                            <?php echo method_field('DELETE'); ?>
+                            <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">Delete</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-            <tr><td colspan="3" class="text-center p-4 text-gray-500">कुनै Month थपिएको छैन।</td></tr>
+            <tr><td colspan="4" class="text-center p-4 text-gray-500">कुनै Month थपिएको छैन।</td></tr>
             <?php endif; ?>
         </tbody>
     </table>
@@ -42,15 +59,19 @@
             <?php echo csrf_field(); ?>
             <select name="month" class="border p-2 w-full" required>
                 <option value="">-- महिना छान्नुहोस् --</option>
-                <?php $__currentLoopData = ['Baishakh','Jestha','Ashad','Shrawan','Bhadra','Ashwin','Kartik','Mangsir','Poush','Magh','Falgun','Chaitra']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <option value="<?php echo e($m); ?>"><?php echo e($m); ?></option>
+                <?php $__currentLoopData = $bsMonths; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($m); ?>" <?php echo e(old('month') == $m ? 'selected' : ''); ?>><?php echo e($m); ?></option>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
-            <input type="text" name="year" placeholder="जस्तै: 2083" class="border p-2 w-full" required>
+            <select name="year" class="border p-2 w-full" required>
+                <option value="">-- वर्ष छान्नुहोस् --</option>
+                <?php $__currentLoopData = $yearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $y): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($y); ?>" <?php echo e(old('year') == $y ? 'selected' : ''); ?>><?php echo e($y); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </select>
             <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 whitespace-nowrap">थप्नुहोस्</button>
         </form>
     </div>
 </div>
 <?php $__env->stopSection(); ?>
-
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/petrol/months.blade.php ENDPATH**/ ?>
