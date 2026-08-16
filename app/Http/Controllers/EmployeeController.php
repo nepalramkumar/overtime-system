@@ -47,22 +47,20 @@ class EmployeeController extends Controller
         return view('employees.edit', compact('employee', 'positions'));
     }
 
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
 
+        // नाम, विभाग, पद अब External API बाट Sync हुने भएकोले यहाँबाट सम्पादन गर्न मिल्दैन
         $request->validate([
-            'name'                  => 'required|string|max:255',
             'employee_code'         => 'required|string|unique:employees,employee_code,' . $employee->id,
-            'department'            => 'required',
-            'position_id'           => 'required|exists:positions,id',
             'vehicle_no'            => 'nullable|string|max:50',
             'petrol_quantity_limit' => 'nullable|integer|min:0',
             'repair_expense_limit'  => 'nullable|integer|min:0',
         ]);
 
         $employee->update($request->only([
-            'name', 'employee_code', 'department', 'position_id',
+            'employee_code',
             'vehicle_no', 'petrol_quantity_limit', 'repair_expense_limit',
         ]));
 

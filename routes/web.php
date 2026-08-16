@@ -146,8 +146,8 @@ Route::middleware(['auth'])->group(function () {
     // Petrol Bill Routes
     // ------------------------------------------
     Route::get('/petrol/bills', [PetrolBillController::class, 'index'])->middleware('role:petrol.bills.view')->name('petrol.bills.index');
-    Route::get('/petrol/bills/create', [PetrolBillController::class, 'create'])->middleware('role:petrol.bills.manage')->name('petrol.bills.create');
-    Route::post('/petrol/bills', [PetrolBillController::class, 'store'])->middleware('role:petrol.bills.manage')->name('petrol.bills.store');
+    Route::get('/petrol/bills/create', [PetrolBillController::class, 'create'])->middleware('role:petrol.bills.entry,petrol.bills.manage')->name('petrol.bills.create');
+Route::post('/petrol/bills', [PetrolBillController::class, 'store'])->middleware('role:petrol.bills.entry,petrol.bills.manage')->name('petrol.bills.store');
     Route::get('/petrol/bills/{id}/edit', [PetrolBillController::class, 'edit'])->middleware('role:petrol.bills.view')->name('petrol.bills.edit');
     Route::put('/petrol/bills/{id}', [PetrolBillController::class, 'update'])->middleware('role:petrol.bills.view')->name('petrol.bills.update');
     Route::delete('/petrol/bills/{id}', [PetrolBillController::class, 'destroy'])->middleware('role:petrol.bills.manage')->name('petrol.bills.destroy');
@@ -158,8 +158,8 @@ Route::middleware(['auth'])->group(function () {
     // Repair Expense Routes
     // ------------------------------------------
     Route::get('/repair/expenses', [RepairExpenseController::class, 'index'])->middleware('role:repair.expenses.view')->name('repair.expenses.index');
-    Route::get('/repair/expenses/create', [RepairExpenseController::class, 'create'])->middleware('role:repair.expenses.manage')->name('repair.expenses.create');
-    Route::post('/repair/expenses', [RepairExpenseController::class, 'store'])->middleware('role:repair.expenses.manage')->name('repair.expenses.store');
+   Route::get('/repair/expenses/create', [RepairExpenseController::class, 'create'])->middleware('role:repair.expenses.entry,repair.expenses.manage')->name('repair.expenses.create');
+Route::post('/repair/expenses', [RepairExpenseController::class, 'store'])->middleware('role:repair.expenses.entry,repair.expenses.manage')->name('repair.expenses.store');
     Route::get('/repair/expenses/{id}/edit', [RepairExpenseController::class, 'edit'])->middleware('role:repair.expenses.view')->name('repair.expenses.edit');
     Route::put('/repair/expenses/{id}', [RepairExpenseController::class, 'update'])->middleware('role:repair.expenses.view')->name('repair.expenses.update');
     Route::delete('/repair/expenses/{id}', [RepairExpenseController::class, 'destroy'])->middleware('role:repair.expenses.manage')->name('repair.expenses.destroy');

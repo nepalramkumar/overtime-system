@@ -38,12 +38,24 @@
                         {{ $expense->employee->name ?? 'N/A' }}
                     </div>
                 @else
+                   @if($expense)
+                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
+                        {{ $expense->employee->name ?? 'N/A' }} ({{ $expense->employee->employee_code ?? '' }})
+                    </div>
+                    <input type="hidden" name="employee_id" value="{{ $expense->employee_id }}">
+                @elseif($canSelectAny)
                     <select name="employee_id" id="employee_id" class="w-full p-2 border rounded" required>
                         <option value="">-- छान्नुहोस् --</option>
                         @foreach($employees as $emp)
                             <option value="{{ $emp->id }}" data-vehicle="{{ $emp->vehicle_no }}">{{ $emp->name }} ({{ $emp->employee_code }})</option>
                         @endforeach
                     </select>
+                @else
+                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
+                        {{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? '' }})
+                    </div>
+                    <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
+                @endif
                     <p id="vehicle-warning" class="text-xs text-red-600 mt-1 hidden">
                         ⚠ यस कर्मचारीको Vehicle No थपिएको छैन।
                         <a href="#" id="vehicle-warning-link" target="_blank" class="underline font-semibold">यहाँबाट थप्नुहोस् →</a>
@@ -136,6 +148,10 @@ if (employeeSelect) {
     const vehicleWarning = document.getElementById('vehicle-warning');
     const vehicleWarningLink = document.getElementById('vehicle-warning-link');
     const submitBtn = document.querySelector('button[type="submit"]');
+   const isSelfEntry = {{ $canSelectAny ? 'false' : 'true' }};
+    const profileUrl = "{{ route('profile.edit') }}";
+    const isSelfEntry = {{ $canSelectAny ? 'false' : 'true' }};
+    const profileUrl = "{{ route('profile.edit') }}";
     const employeesEditBaseUrl = "{{ url('/employees') }}";
 
     employeeSelect.addEventListener('change', function () {
@@ -144,7 +160,7 @@ if (employeeSelect) {
 
         if (this.value && !vehicleNo) {
             vehicleWarning.classList.remove('hidden');
-            vehicleWarningLink.href = employeesEditBaseUrl + '/' + this.value + '/edit';
+            vehicleWarningLink.href = isSelfEntry ? profileUrl : (employeesEditBaseUrl + '/' + this.value + '/edit');
             if (submitBtn) submitBtn.disabled = true;
             if (submitBtn) submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
         } else {

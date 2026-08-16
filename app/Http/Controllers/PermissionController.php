@@ -23,6 +23,8 @@ class PermissionController extends Controller
 'petrol.months.manage' => 'Petrol Month व्यवस्थापन',
 'repair.expenses.manage' => 'Repair Expense व्यवस्थापन (Create/Edit/Delete)',
 'repair.expenses.view'   => 'Repair Expense हेर्ने',
+'petrol.bills.entry'    => 'Petrol Bill आफ्नै entry गर्ने',
+'repair.expenses.entry' => 'Repair Expense आफ्नै entry गर्ने',
 
 ];
 

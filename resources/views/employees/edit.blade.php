@@ -19,9 +19,13 @@
             @csrf
             @method('PUT')
 
+            <p class="text-xs text-gray-500 mb-4 bg-gray-50 p-2 rounded">
+                ℹ️ नाम, विभाग, र पद भविष्यमा External API बाट स्वतः Sync हुने भएकोले, यहाँबाट सम्पादन गर्न मिल्दैन।
+            </p>
+
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">कर्मचारीको नाम</label>
-                <input type="text" name="name" value="{{ old('name', $employee->name) }}" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" required>
+                <div class="w-full border p-2 rounded bg-gray-100 text-gray-700 font-semibold">{{ $employee->name }}</div>
             </div>
 
             <div class="mb-4">
@@ -31,17 +35,12 @@
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">विभाग (Department)</label>
-                <input type="text" name="department" value="{{ old('department', $employee->department) }}" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" required>
+                <div class="w-full border p-2 rounded bg-gray-100 text-gray-700 font-semibold">{{ $employee->department }}</div>
             </div>
 
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-1">पद (Position)</label>
-                <select name="position_id" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" required>
-                    <option value="">-- Position छान्नुहोस् --</option>
-                    @foreach($positions as $position)
-                        <option value="{{ $position->id }}" {{ old('position_id', $employee->position_id) == $position->id ? 'selected' : '' }}>{{ $position->name }}</option>
-                    @endforeach
-                </select>
+                <div class="w-full border p-2 rounded bg-gray-100 text-gray-700 font-semibold">{{ $employee->position->name ?? 'N/A' }}</div>
             </div>
 
             <hr class="my-6">

@@ -7,7 +7,16 @@
     </h2>
 
     @if(session('error'))
-        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">{{ session('error') }}</div>
+        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
+            {{ session('error') }}
+            @if(session('vehicle_missing_employee_id'))
+                <br>
+                <a href="{{ session('is_self_entry') ? route('profile.edit') : route('employees.edit', session('vehicle_missing_employee_id')) }}"
+                   class="underline font-semibold">
+                    यहाँबाट Vehicle No थप्नुहोस् →
+                </a>
+            @endif
+        </div>
     @endif
     @if($errors->any())
         <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
@@ -26,20 +35,31 @@
         @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
+           <div>
                 <label class="block text-gray-700 font-semibold mb-1">कर्मचारी</label>
                 @if($bill)
                     <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
-                        {{ $bill->employee->name ?? 'N/A' }}
+                        {{ $bill->employee->name ?? 'N/A' }} ({{ $bill->employee->employee_code ?? '' }})
                     </div>
-                @else
-                    <select name="employee_id" class="w-full p-2 border rounded" required>
+                    <input type="hidden" name="employee_id" value="{{ $bill->employee_id }}">
+                @elseif($canSelectAny)
+                    <select name="employee_id" id="employee_id" class="w-full p-2 border rounded" required>
                         <option value="">-- छान्नुहोस् --</option>
                         @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">{{ $emp->name }} ({{ $emp->employee_code }})</option>
+                            <option value="{{ $emp->id }}" data-vehicle="{{ $emp->vehicle_no }}">{{ $emp->name }} ({{ $emp->employee_code }})</option>
                         @endforeach
                     </select>
+                @else
+                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
+                        {{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? '' }})
+                    </div>
+                    <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
                 @endif
+
+                <div id="vehicle-warning" class="hidden bg-red-50 border border-red-200 text-red-700 p-2 rounded mt-2 text-sm">
+                    यस कर्मचारीको Vehicle No अद्यावधिक गरिएको छैन।
+                    <a id="vehicle-warning-link" href="#" class="underline font-semibold" target="_blank">यहाँ थप्नुहोस्</a>
+                </div>
             </div>
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Month</label>
@@ -133,5 +153,33 @@ document.getElementById('rows-body').addEventListener('input', function (e) {
         row.querySelector('.row-amount').value = (qty * rate).toFixed(2);
     }
 });
+
+// Employee छान्नासाथ Vehicle No नभएको जाँच गर्ने (create फारममा मात्र लागू हुन्छ)
+const employeeSelect = document.getElementById('employee_id');
+if (employeeSelect) {
+    const vehicleWarning = document.getElementById('vehicle-warning');
+    const vehicleWarningLink = document.getElementById('vehicle-warning-link');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const isSelfEntry = {{ $canSelectAny ? 'false' : 'true' }};
+    const profileUrl = "{{ route('profile.edit') }}";
+    const employeesEditBaseUrl = "{{ url('/employees') }}";
+
+    employeeSelect.addEventListener('change', function () {
+        const selected = this.options[this.selectedIndex];
+        const vehicleNo = selected ? selected.getAttribute('data-vehicle') : '';
+
+       if (this.value && !vehicleNo) {
+            vehicleWarning.classList.remove('hidden');
+            vehicleWarningLink.href = isSelfEntry ? profileUrl : (employeesEditBaseUrl + '/' + this.value + '/edit');
+            if (submitBtn) submitBtn.disabled = true;
+            if (submitBtn) submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            vehicleWarning.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitBtn) submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    });
+}
 </script>
+
 @endsection

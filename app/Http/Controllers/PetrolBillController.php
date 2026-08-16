@@ -26,14 +26,29 @@ class PetrolBillController extends Controller
 
     public function create()
     {
-        $employees = Employee::orderBy('name')->get();
+        $canSelectAny = $this->canSelectAny();
+
+        if ($canSelectAny) {
+            $employees = Employee::orderBy('name')->get();
+            $lockedEmployee = null;
+        } else {
+            $lockedEmployee = Employee::where('id', auth()->user()->employee_id)->first();
+            $employees = $lockedEmployee ? collect([$lockedEmployee]) : collect([]);
+
+            if (!$lockedEmployee) {
+                return redirect()->back()->with('error', 'तपाईंको User account कुनै Employee सँग link भएको छैन। कृपया Admin लाई सम्पर्क गर्नुहोस्।');
+            }
+        }
+
         // Disable गरिएका Month नयाँ Bill entry मा नदेखियोस्
         $months = PetrolMonth::active()->orderBy('id', 'desc')->get();
 
         return view('petrol.bills.form', [
-            'employees' => $employees,
-            'months'    => $months,
-            'bill'      => null,
+            'employees'      => $employees,
+            'months'         => $months,
+            'bill'           => null,
+            'canSelectAny'   => $canSelectAny,
+            'lockedEmployee' => $lockedEmployee,
         ]);
     }
 
@@ -49,13 +64,18 @@ class PetrolBillController extends Controller
             'remarks'        => 'nullable|string',
         ]);
 
+        if (!$this->canSelectAny() && (int) $validated['employee_id'] !== (int) auth()->user()->employee_id) {
+            return redirect()->back()->with('error', 'तपाईं आफ्नो बाहेक अरूको Petrol Bill दर्ता गर्न पाउनुहुन्न।');
+        }
+
         $employee = Employee::findOrFail($validated['employee_id']);
 
-        // Vehicle No नभएको employee को Petrol Bill दर्ता गर्न नमिल्ने
+      // Vehicle No नभएको employee को Petrol Bill दर्ता गर्न नमिल्ने
         if (empty($employee->vehicle_no)) {
             return redirect()->back()->withInput()->with('error', 'यस कर्मचारी (' . $employee->name . ') को Vehicle No अद्यावधिक गरिएको छैन। Petrol Bill दर्ता गर्नुअघि Vehicle No थप्नुहोस्।')
                 ->with('vehicle_missing_employee_id', $employee->id)
-                ->with('vehicle_missing_employee_name', $employee->name);
+                ->with('vehicle_missing_employee_name', $employee->name)
+                ->with('is_self_entry', !$this->canSelectAny());
         }
 
         $exists = PetrolBill::where('employee_id', $validated['employee_id'])
@@ -64,6 +84,10 @@ class PetrolBillController extends Controller
 
         if ($exists) {
             return redirect()->back()->withInput()->with('error', 'यो कर्मचारीको यो Month को Bill पहिले नै दर्ता भइसकेको छ।');
+        }
+
+       if ($employee->petrol_quantity_limit <= 0) {
+            return redirect()->back()->withInput()->with('error', 'यस कर्मचारीको Petrol Quantity Limit अझै Set गरिएको छैन। Admin लाई सम्पर्क गर्नुहोस्।');
         }
 
         $totalQuantity = collect($validated['quantity'])->map(fn($q) => (float) $q)->sum();
@@ -88,6 +112,17 @@ class PetrolBillController extends Controller
         ]);
 
         return redirect()->route('petrol.bills.index')->with('success', 'Petrol Bill सफलतापूर्वक दर्ता भयो।');
+    }
+
+    protected function canSelectAny()
+    {
+        if (auth()->user()->role === 'admin') {
+            return true;
+        }
+
+        return \App\Models\RolePermission::where('role', auth()->user()->role)
+            ->where('permission', 'petrol.bills.manage')
+            ->exists();
     }
 
     public function edit($id)
@@ -120,7 +155,12 @@ class PetrolBillController extends Controller
             'remarks'  => 'nullable|string',
         ]);
 
-        $employee = $bill->employee;
+     $employee = $bill->employee;
+
+        if ($employee->petrol_quantity_limit <= 0) {
+            return redirect()->back()->withInput()->with('error', 'यस कर्मचारीको Petrol Quantity Limit अझै Set गरिएको छैन। Admin लाई सम्पर्क गर्नुहोस्।');
+        }
+
         $totalQuantity = collect($validated['quantity'])->map(fn($q) => (float) $q)->sum();
 
         if ($totalQuantity > $employee->petrol_quantity_limit) {

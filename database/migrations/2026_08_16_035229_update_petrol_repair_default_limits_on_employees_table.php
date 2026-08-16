@@ -1,0 +1,24 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('employees', function (Blueprint $table) {
+            $table->integer('petrol_quantity_limit')->default(25)->change();
+            $table->integer('repair_expense_limit')->default(8000)->change();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('employees', function (Blueprint $table) {
+            $table->integer('petrol_quantity_limit')->default(20)->change();
+            $table->integer('repair_expense_limit')->default(0)->change();
+        });
+    }
+};

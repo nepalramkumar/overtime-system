@@ -47,6 +47,17 @@ class RepairExpenseController extends Controller
         ];
     }
 
+    protected function canSelectAny()
+    {
+        if (auth()->user()->role === 'admin') {
+            return true;
+        }
+
+        return RolePermission::where('role', auth()->user()->role)
+            ->where('permission', 'repair.expenses.manage')
+            ->exists();
+    }
+
     public function index(Request $request)
     {
         $query = RepairExpense::with(['employee.position']);
@@ -63,13 +74,28 @@ class RepairExpenseController extends Controller
 
     public function create()
     {
-        $employees = Employee::orderBy('name')->get();
+        $canSelectAny = $this->canSelectAny();
+
+        if ($canSelectAny) {
+            $employees = Employee::orderBy('name')->get();
+            $lockedEmployee = null;
+        } else {
+            $lockedEmployee = Employee::where('id', auth()->user()->employee_id)->first();
+            $employees = $lockedEmployee ? collect([$lockedEmployee]) : collect([]);
+
+            if (!$lockedEmployee) {
+                return redirect()->back()->with('error', 'तपाईंको User account कुनै Employee सँग link भएको छैन। कृपया Admin लाई सम्पर्क गर्नुहोस्।');
+            }
+        }
+
         $fyOptions = self::fyOptions();
 
         return view('repair.expenses.form', [
-            'employees' => $employees,
-            'fyOptions' => $fyOptions,
-            'expense'   => null,
+            'employees'      => $employees,
+            'fyOptions'      => $fyOptions,
+            'expense'        => null,
+            'canSelectAny'   => $canSelectAny,
+            'lockedEmployee' => $lockedEmployee,
         ]);
     }
 
@@ -86,12 +112,19 @@ class RepairExpenseController extends Controller
             'fy_year.in' => 'कृपया सूचीबाट मात्र FY Year छान्नुहोस्।',
         ]);
 
+        if (!$this->canSelectAny() && (int) $validated['employee_id'] !== (int) auth()->user()->employee_id) {
+            return redirect()->back()->with('error', 'तपाईं आफ्नो बाहेक अरूको Repair Expense दर्ता गर्न पाउनुहुन्न।');
+        }
+
         $employee = Employee::findOrFail($validated['employee_id']);
 
         // Vehicle No नभएको employee को Repair Expense दर्ता गर्न नमिल्ने
+
+      // Vehicle No नभएको employee को Repair Expense दर्ता गर्न नमिल्ने
         if (empty($employee->vehicle_no)) {
             return redirect()->back()->withInput()->with('error', 'यस कर्मचारी (' . $employee->name . ') को Vehicle No अद्यावधिक गरिएको छैन। Repair Expense दर्ता गर्नुअघि Vehicle No थप्नुहोस्।')
-                ->with('vehicle_missing_employee_id', $employee->id);
+                ->with('vehicle_missing_employee_id', $employee->id)
+                ->with('is_self_entry', !$this->canSelectAny());
         }
 
         // यो employee को यो FY मा पहिले नै entry भइसकेको छ कि जाँच्ने
@@ -112,12 +145,15 @@ class RepairExpenseController extends Controller
             }
         }
 
+       if ($employee->repair_expense_limit <= 0) {
+            return redirect()->back()->withInput()->with('error', 'यस कर्मचारीको Repair Expense Limit अझै Set गरिएको छैन। Admin लाई सम्पर्क गर्नुहोस्।');
+        }
+
         $totalAmount = collect($validated['amount'])->map(fn($a) => (float) $a)->sum();
 
         if ($totalAmount > $employee->repair_expense_limit) {
             return redirect()->back()->withInput()->with('error', 'Repair Expense Limit (रु. ' . number_format($employee->repair_expense_limit) . ') भन्दा बढी भयो।');
         }
-
         RepairExpense::create([
             'employee_id'  => $validated['employee_id'],
             'fy_year'      => $validated['fy_year'],
@@ -170,6 +206,10 @@ class RepairExpenseController extends Controller
             if ($bsDate < $rangeStart || $bsDate > $rangeEnd) {
                 return redirect()->back()->withInput()->with('error', 'मिति (' . $d . ') यो FY Year (' . $expense->fy_year . ') भित्र पर्दैन।');
             }
+        }
+
+   if ($employee->repair_expense_limit <= 0) {
+            return redirect()->back()->withInput()->with('error', 'यस कर्मचारीको Repair Expense Limit अझै Set गरिएको छैन। Admin लाई सम्पर्क गर्नुहोस्।');
         }
 
         $totalAmount = collect($validated['amount'])->map(fn($a) => (float) $a)->sum();
