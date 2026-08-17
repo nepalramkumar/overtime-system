@@ -42,7 +42,11 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">पद (Position)</label>
                 <div class="w-full border p-2 rounded bg-gray-100 text-gray-700 font-semibold">{{ $employee->position->name ?? 'N/A' }}</div>
             </div>
-
+<div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Hierarchy (Level भित्र क्रम)</label>
+                <input type="number" name="hierarchy" value="{{ old('hierarchy', $employee->hierarchy) }}" class="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500" min="1">
+                <p class="text-xs text-gray-500 mt-1">एउटै Position Level भित्र, कुन कर्मचारी पहिले देखिने भन्ने क्रम (सानो number = माथि)।</p>
+            </div>
             <hr class="my-6">
             <h3 class="text-sm font-bold text-gray-500 uppercase mb-4">Petrol Bill / Repair Expense सम्बन्धी विवरण</h3>
 

@@ -2,7 +2,7 @@
 <html lang="ne">
 <head>
     <meta charset="UTF-8">
-    <title>Petrol Bill - {{ $bill->month->month ?? 'N/A' }} {{ $bill->month->year ?? '' }}</title>
+    <title>Repair Expense - {{ $employee->name ?? 'N/A' }}</title>
     <style>
         @page {
             size: A4;
@@ -44,11 +44,6 @@
             color: #333;
         }
 
-        .bill-info-item span {
-            font-size: 12px;
-            color: #333;
-        }
-
         table {
             border-collapse: collapse;
             width: 100%;
@@ -69,8 +64,8 @@
             font-weight: 600;
         }
 
-        tfoot td {
-            font-weight: bold;
+        td.particulars {
+            text-align: left;
         }
 
         .bill-summary {
@@ -80,14 +75,14 @@
 </head>
 <body>
     <div class="bill-header">
-        <h2>Petrol Bill details for the month of {{ $bill->month->month ?? 'N/A' }} {{ $bill->month->year ?? '' }}</h2>
+        <h2>Repair Expense Ledger — FY {{ $expense->fy_year }}</h2>
     </div>
 
     <div class="bill-box">
         <div class="bill-info">
             <div class="bill-info-item">
                 <strong>Name:</strong>
-                <span>{{ $bill->employee->name ?? 'N/A' }}({{ $bill->employee->vehicle_no ?? '' }})</span>
+                <span>{{ $employee->name ?? 'N/A' }}({{ $employee->vehicle_no ?? '' }})</span>
             </div>
         </div>
 
@@ -96,39 +91,30 @@
                 <tr>
                     <th>SN</th>
                     <th>Date</th>
-                    <th>Qty</th>
-                    <th>Rate</th>
-                    <th>Amount</th>
+                    <th>Particulars</th>
+                    <th>Bill Amount</th>
+                    <th>Balance Amount</th>
                 </tr>
             </thead>
             <tbody>
-                @forelse($bill->date as $index => $d)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $d }}</td>
-                        <td>{{ $bill->quantity[$index] ?? '' }}</td>
-                        <td>{{ $bill->rate[$index] ?? '' }}</td>
-                        <td>{{ number_format($bill->amount[$index] ?? 0, 2) }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5">No data available</td>
-                    </tr>
-                @endforelse
-            </tbody>
-            <tfoot>
                 <tr>
-                    <td colspan="2" style="text-align: right;">Total</td>
-                    <td>{{ number_format($bill->total_quantity, 2) }}</td>
-                    <td></td>
-                    <td>{{ number_format($bill->total_amount, 2) }}</td>
+                    <td>1</td>
+                    <td>{{ $openingDateBs }}</td>
+                    <td class="particulars">Balance</td>
+                    <td>0</td>
+                    <td>{{ number_format($openingBalance, 0) }}</td>
                 </tr>
-            </tfoot>
+                @foreach($ledgerRows as $i => $row)
+                <tr>
+                    <td>{{ $i + 2 }}</td>
+                    <td>{{ $row['date'] }}</td>
+                    <td class="particulars">{{ $row['particulars'] }}</td>
+                    <td>{{ number_format($row['bill_amount'], 0) }}</td>
+                    <td>{{ number_format($row['balance'], 0) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
         </table>
-
-        @if($bill->remarks)
-            <p style="margin-top: 10px;"><strong>कैफियत:</strong> {{ $bill->remarks }}</p>
-        @endif
 
         <div class="bill-summary">
             <p><strong>Signature:</strong> ______________________</p>

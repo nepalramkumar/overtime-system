@@ -164,7 +164,7 @@ Route::post('/repair/expenses', [RepairExpenseController::class, 'store'])->midd
     Route::put('/repair/expenses/{id}', [RepairExpenseController::class, 'update'])->middleware('role:repair.expenses.view')->name('repair.expenses.update');
     Route::delete('/repair/expenses/{id}', [RepairExpenseController::class, 'destroy'])->middleware('role:repair.expenses.manage')->name('repair.expenses.destroy');
     Route::post('/repair/expenses/{id}/toggle-edit', [RepairExpenseController::class, 'toggleEditPermission'])->middleware('role:repair.expenses.manage')->name('repair.expenses.toggleEdit');
-
+Route::get('/repair/expenses/{id}/print', [RepairExpenseController::class, 'printExpense'])->middleware('role:repair.expenses.view')->name('repair.expenses.print');
     // ------------------------------------------
     // आफ्नो Vehicle No अपडेट गर्ने (Profile पेजबाट, जोसुकै logged-in employee ले आफ्नै मात्र)
     // ------------------------------------------

@@ -2,10 +2,10 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class RepairExpenseExport implements FromCollection, WithHeadings
+class RepairExpenseExport implements FromArray, WithHeadings
 {
     protected $rows;
 
@@ -14,35 +14,55 @@ class RepairExpenseExport implements FromCollection, WithHeadings
         $this->rows = $rows;
     }
 
-    public function collection()
+    public function array(): array
     {
-        if ($this->rows->isEmpty()) {
-            return collect([['Error' => 'डेटा उपलब्ध छैन']]);
-        }
-
         $out = [];
         $sn = 1;
 
-        foreach ($this->rows as $row) {
-            $out[] = [
-                'sn'            => $sn++,
-                'employee_code' => $row['employee']->employee_code ?? '-',
-                'name'          => $row['employee']->name ?? 'N/A',
-                'position'      => $row['employee']->position->name ?? 'N/A',
-                'vehicle_no'    => $row['employee']->vehicle_no ?? '-',
-                'fy_year'       => $row['fy_year'],
-                'bs_month'      => $row['bs_month'],
-                'bs_date'       => $row['bs_date'],
-                'description'   => $row['description'],
-                'amount'        => $row['amount'],
-            ];
+        // 'expense_id' अनुसार group गर्ने (एउटै entry का सबै filtered date-rows सँगै रहने)
+        $grouped = collect($this->rows)->groupBy('expense_id');
+
+        foreach ($grouped as $expenseRows) {
+            $expenseRows = collect($expenseRows)->values();
+            $first = $expenseRows->first();
+            $employee = $first['employee'];
+            $totalAmount = $expenseRows->sum('amount');
+
+            foreach ($expenseRows as $i => $row) {
+                if ($i === 0) {
+                    $out[] = [
+                        $sn++,
+                        $row['fy_year'],
+                        $employee->vehicle_no ?? '-',
+                        $employee->position->level ?? '-',
+                        $employee->hierarchy ?? '-',
+                        $employee->name ?? 'N/A',
+                        $row['bs_date'],
+                        $row['description'],
+                        $row['amount'],
+                        $totalAmount,
+                    ];
+                } else {
+                    $out[] = [
+                        '', '', '', '', '', '',
+                        $row['bs_date'],
+                        $row['description'],
+                        $row['amount'],
+                        '',
+                    ];
+                }
+            }
         }
 
-        return collect($out);
+        if (empty($out)) {
+            $out[] = ['डेटा उपलब्ध छैन', '', '', '', '', '', '', '', '', ''];
+        }
+
+        return $out;
     }
 
     public function headings(): array
     {
-        return ["सि.नं.", "कर्मचारी कोड", "कर्मचारी", "पद", "Vehicle No", "FY Year", "Month", "मिति (BS)", "Description", "रकम"];
+        return ["S.N", "FY Year", "Vehicle No", "Level", "Hierarchy", "Name", "Bill Date", "Description", "Amount", "Total Amount"];
     }
 }

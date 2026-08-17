@@ -2,10 +2,10 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class PetrolBillExport implements FromCollection, WithHeadings
+class PetrolBillExport implements FromArray, WithHeadings
 {
     protected $bills;
 
@@ -14,34 +14,55 @@ class PetrolBillExport implements FromCollection, WithHeadings
         $this->bills = $bills;
     }
 
-    public function collection()
+    public function array(): array
     {
-        if ($this->bills->isEmpty()) {
-            return collect([['Error' => 'डेटा उपलब्ध छैन']]);
-        }
-
         $rows = [];
         $sn = 1;
 
         foreach ($this->bills as $bill) {
-            $rows[] = [
-                'sn'            => $sn++,
-                'employee_code' => $bill->employee->employee_code ?? '-',
-                'name'          => $bill->employee->name ?? 'N/A',
-                'position'      => $bill->employee->position->name ?? 'N/A',
-                'vehicle_no'    => $bill->employee->vehicle_no ?? '-',
-                'month'         => ($bill->month->month ?? '') . ' - ' . ($bill->month->year ?? ''),
-                'total_quantity'=> $bill->total_quantity,
-                'total_amount'  => $bill->total_amount,
-                'remarks'       => $bill->remarks ?? '-',
-            ];
+            $employee = $bill->employee;
+            $monthLabel = ($bill->month->month ?? '') . ' ' . ($bill->month->year ?? '');
+
+            foreach ($bill->date as $i => $d) {
+                if ($i === 0) {
+                    // पहिलो row: सबै जानकारी + total
+                    $rows[] = [
+                        $sn++,
+                        $monthLabel,
+                        $employee->vehicle_no ?? '-',
+                        $employee->position->level ?? '-',
+                        $employee->hierarchy ?? '-',
+                        $employee->name ?? 'N/A',
+                        $d,
+                        $bill->quantity[$i] ?? '',
+                        $bill->rate[$i] ?? '',
+                        $bill->amount[$i] ?? '',
+                        $bill->total_quantity,
+                        $bill->total_amount,
+                    ];
+                } else {
+                    // बाँकी row: date/quantity/rate/amount मात्र
+                    $rows[] = [
+                        '', '', '', '', '', '',
+                        $d,
+                        $bill->quantity[$i] ?? '',
+                        $bill->rate[$i] ?? '',
+                        $bill->amount[$i] ?? '',
+                        '', '',
+                    ];
+                }
+            }
         }
 
-        return collect($rows);
+        if (empty($rows)) {
+            $rows[] = ['डेटा उपलब्ध छैन', '', '', '', '', '', '', '', '', '', '', ''];
+        }
+
+        return $rows;
     }
 
     public function headings(): array
     {
-        return ["सि.नं.", "कर्मचारी कोड", "कर्मचारी", "पद", "Vehicle No", "Month", "जम्मा परिमाण (L)", "जम्मा रकम", "कैफियत"];
+        return ["S.N", "Month", "Vehicle No", "Level", "Hierarchy", "Name", "Bill Date", "Quantity", "Rate", "Amount", "Total Quantity", "Total Amount"];
     }
 }

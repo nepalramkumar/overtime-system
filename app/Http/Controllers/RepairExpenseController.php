@@ -100,6 +100,57 @@ class RepairExpenseController extends Controller
 
         return $rows->sortByDesc('bs_date')->values();
     }
+    public function printExpense($id)
+{
+    $expense = RepairExpense::with(['employee'])->findOrFail($id);
+    $employee = $expense->employee;
+
+    // यो record भन्दा अघि (created_at अनुसार) यही FY मा बनेका अरू entries को जम्मा
+    $priorRecords = RepairExpense::where('employee_id', $expense->employee_id)
+            ->where('fy_year', $expense->fy_year)
+            ->where('created_at', '<', $expense->created_at)
+            ->get();
+
+        $priorClaimed = $priorRecords->sum('total_amount');
+        $openingBalance = $employee->repair_expense_limit - $priorClaimed;
+
+        // Opening date: अघिल्लो record भएको अन्तिम (सबैभन्दा पछिल्लो) मिति;
+        // पहिलो पटक हो भने FY को सुरुको मिति (श्रावण १)
+        $lastPriorDate = $priorRecords
+            ->flatMap(fn($rec) => $rec->date)
+            ->sort()
+            ->last();
+
+        if ($lastPriorDate) {
+            $openingDateBs = adToBs($lastPriorDate);
+        } else {
+            $fyStartYear = (int) explode('/', $expense->fy_year)[0];
+            $openingDateBs = $fyStartYear . '-04-01';
+        }
+
+    $ledgerRows = [];
+    $runningBalance = $openingBalance;
+
+    foreach ($expense->date as $i => $d) {
+        $amount = (float) ($expense->amount[$i] ?? 0);
+        $runningBalance -= $amount;
+
+        $ledgerRows[] = [
+            'date'        => adToBs($d),
+            'particulars' => $expense->description[$i] ?? '',
+            'bill_amount' => $amount,
+            'balance'     => $runningBalance,
+        ];
+    }
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('repair.expenses.pdf', [
+        'expense'        => $expense,
+        'employee'       => $employee,
+        'openingDateBs'  => $openingDateBs,
+        'openingBalance' => $openingBalance,
+        'ledgerRows'     => $ledgerRows,
+    ])->setPaper('a4')->download('Repair_Expense_' . str_replace(' ', '_', $employee->name) . '_' . date('Ymd') . '.pdf');
+}
 
     public function index(Request $request)
     {

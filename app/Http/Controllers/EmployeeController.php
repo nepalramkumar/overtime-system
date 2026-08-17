@@ -56,10 +56,11 @@ class EmployeeController extends Controller
             'vehicle_no'            => 'nullable|string|max:50',
             'petrol_quantity_limit' => 'nullable|integer|min:0',
             'repair_expense_limit'  => 'nullable|integer|min:0',
+            'hierarchy'             => 'nullable|integer|min:1',
         ]);
 
         $employee->update($request->only([
-            'vehicle_no', 'petrol_quantity_limit', 'repair_expense_limit',
+            'vehicle_no', 'petrol_quantity_limit', 'repair_expense_limit', 'hierarchy',
         ]));
         return redirect()->route('employees.index')->with('success', 'कर्मचारीको विवरण अपडेट भयो।');
     }

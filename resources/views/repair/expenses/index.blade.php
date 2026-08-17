@@ -81,6 +81,10 @@
                         @endif
                     </td>
                     <td class="p-3 border">
+                        <a href="{{ route('repair.expenses.print', $row['expense_id']) }}" target="_blank"
+                           class="bg-purple-600 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-purple-700">
+                            Print
+                        </a>
                         @if(auth()->user()->role === 'admin' || \App\Models\RolePermission::where('role', auth()->user()->role)->where('permission', 'repair.expenses.manage')->exists() || $row['isEdit'])
                             <a href="{{ route('repair.expenses.edit', $row['expense_id']) }}"
                                class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-blue-700 ml-1">
