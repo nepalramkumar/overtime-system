@@ -58,18 +58,65 @@ class RepairExpenseController extends Controller
             ->exists();
     }
 
-    public function index(Request $request)
+  protected const BS_MONTHS = ['Baishakh','Jestha','Ashad','Shrawan','Bhadra','Ashwin','Kartik','Mangsir','Poush','Magh','Falgun','Chaitra'];
+
+    /**
+     * हरेक RepairExpense entry को date/description/amount array लाई
+     * per-date row मा भत्काएर (flatten), हरेक row मा BS month थपेर दिने।
+     */
+    protected function flattenedRows($fyFilter = null, $monthFilter = null)
     {
         $query = RepairExpense::with(['employee.position']);
-
-        if ($request->filled('fy_year')) {
-            $query->where('fy_year', $request->fy_year);
+        if ($fyFilter) {
+            $query->where('fy_year', $fyFilter);
         }
 
-        $expenses = $query->orderBy('created_at', 'desc')->paginate(20);
-        $fyList = RepairExpense::select('fy_year')->distinct()->orderBy('fy_year', 'desc')->pluck('fy_year');
+        $expenses = $query->orderBy('created_at', 'desc')->get();
+        $rows = collect();
 
-        return view('repair.expenses.index', compact('expenses', 'fyList'));
+        foreach ($expenses as $expense) {
+            foreach ($expense->date as $i => $d) {
+                $bsDate = adToBs($d);
+                $bsMonthNum = (int) explode('-', $bsDate)[1];
+                $bsMonthName = self::BS_MONTHS[$bsMonthNum - 1] ?? '';
+
+                if ($monthFilter && $bsMonthName !== $monthFilter) {
+                    continue;
+                }
+
+              $rows->push([
+                    'expense_id'  => $expense->id,
+                    'employee'    => $expense->employee,
+                    'fy_year'     => $expense->fy_year,
+                    'date'        => $d,
+                    'bs_date'     => $bsDate,
+                    'bs_month'    => $bsMonthName,
+                    'description' => $expense->description[$i] ?? '',
+                    'amount'      => (float) ($expense->amount[$i] ?? 0),
+                    'isEdit'      => $expense->isEdit,
+                ]);
+            }
+        }
+
+        return $rows->sortByDesc('bs_date')->values();
+    }
+
+    public function index(Request $request)
+    {
+        $fyFilter = $request->filled('fy_year') ? $request->fy_year : null;
+        $monthFilter = $request->filled('bs_month') ? $request->bs_month : null;
+
+        $rows = $this->flattenedRows($fyFilter, $monthFilter);
+
+        if ($request->has('export') && $request->export === 'excel') {
+            return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\RepairExpenseExport($rows), 'Repair_Expenses_' . date('Ymd') . '.xlsx');
+        }
+
+        $fyList = RepairExpense::select('fy_year')->distinct()->orderBy('fy_year', 'desc')->pluck('fy_year');
+        $monthList = self::BS_MONTHS;
+
+        // सामान्य pagination नगरी, सिधै collection नै view मा (धेरै ठूलो डेटा भए Pagination अलग व्यवस्था गर्न सकिन्छ)
+        return view('repair.expenses.index', compact('rows', 'fyList', 'monthList'));
     }
 
     public function create()
@@ -127,15 +174,7 @@ class RepairExpenseController extends Controller
                 ->with('is_self_entry', !$this->canSelectAny());
         }
 
-        // यो employee को यो FY मा पहिले नै entry भइसकेको छ कि जाँच्ने
-        $exists = RepairExpense::where('employee_id', $validated['employee_id'])
-            ->where('fy_year', $validated['fy_year'])
-            ->exists();
-
-        if ($exists) {
-            return redirect()->back()->withInput()->with('error', 'यो कर्मचारीको यो FY Year को Repair Expense पहिले नै दर्ता भइसकेको छ।');
-        }
-
+        
         // हरेक मिति छानिएको FY भित्रकै हो कि जाँच्ने (BS मा बदलेर)
         [$rangeStart, $rangeEnd] = $this->fyDateRange($validated['fy_year']);
         foreach ($validated['date'] as $d) {
@@ -145,14 +184,23 @@ class RepairExpenseController extends Controller
             }
         }
 
-       if ($employee->repair_expense_limit <= 0) {
+      if ($employee->repair_expense_limit <= 0) {
             return redirect()->back()->withInput()->with('error', 'यस कर्मचारीको Repair Expense Limit अझै Set गरिएको छैन। Admin लाई सम्पर्क गर्नुहोस्।');
         }
 
         $totalAmount = collect($validated['amount'])->map(fn($a) => (float) $a)->sum();
 
-        if ($totalAmount > $employee->repair_expense_limit) {
-            return redirect()->back()->withInput()->with('error', 'Repair Expense Limit (रु. ' . number_format($employee->repair_expense_limit) . ') भन्दा बढी भयो।');
+        $alreadyClaimed = RepairExpense::where('employee_id', $validated['employee_id'])
+            ->where('fy_year', $validated['fy_year'])
+            ->sum('total_amount');
+
+        $remaining = $employee->repair_expense_limit - $alreadyClaimed;
+
+        if ($totalAmount > $remaining) {
+            return redirect()->back()->withInput()->with('error',
+                'Limit भन्दा बढी भयो। यो FY Year (' . $validated['fy_year'] . ') मा तपाईंको कुल Limit रु. ' . number_format($employee->repair_expense_limit) .
+                ' मध्ये रु. ' . number_format($alreadyClaimed) . ' पहिले नै claim भइसकेको छ। बाँकी रु. ' . number_format($remaining) . ' मात्र claim गर्न मिल्छ।'
+            );
         }
         RepairExpense::create([
             'employee_id'  => $validated['employee_id'],
@@ -162,7 +210,7 @@ class RepairExpenseController extends Controller
             'amount'       => $validated['amount'],
             'total_amount' => $totalAmount,
             'remarks'      => $validated['remarks'] ?? null,
-            'isEdit'       => true,
+            'isEdit'       => false,
         ]);
 
         return redirect()->route('repair.expenses.index')->with('success', 'Repair Expense सफलतापूर्वक दर्ता भयो।');
@@ -177,9 +225,11 @@ class RepairExpenseController extends Controller
         }
 
         return view('repair.expenses.form', [
-            'expense'   => $expense,
-            'employees' => Employee::orderBy('name')->get(),
-            'fyOptions' => self::fyOptions(),
+            'expense'        => $expense,
+            'employees'      => Employee::orderBy('name')->get(),
+            'fyOptions'      => self::fyOptions(),
+            'canSelectAny'   => $this->canSelectAny(),
+            'lockedEmployee' => null,
         ]);
     }
 
@@ -200,12 +250,32 @@ class RepairExpenseController extends Controller
 
         $employee = $expense->employee;
 
-        [$rangeStart, $rangeEnd] = $this->fyDateRange($expense->fy_year);
+      [$rangeStart, $rangeEnd] = $this->fyDateRange($expense->fy_year);
         foreach ($validated['date'] as $d) {
             $bsDate = adToBs($d);
             if ($bsDate < $rangeStart || $bsDate > $rangeEnd) {
                 return redirect()->back()->withInput()->with('error', 'मिति (' . $d . ') यो FY Year (' . $expense->fy_year . ') भित्र पर्दैन।');
             }
+        }
+
+        if ($employee->repair_expense_limit <= 0) {
+            return redirect()->back()->withInput()->with('error', 'यस कर्मचारीको Repair Expense Limit अझै Set गरिएको छैन। Admin लाई सम्पर्क गर्नुहोस्।');
+        }
+
+        $totalAmount = collect($validated['amount'])->map(fn($a) => (float) $a)->sum();
+
+        // यो हालको entry लाई बाहेक राखेर, बाँकी सबै entries को जम्मा
+        $alreadyClaimed = RepairExpense::where('employee_id', $expense->employee_id)
+            ->where('fy_year', $expense->fy_year)
+            ->where('id', '!=', $expense->id)
+            ->sum('total_amount');
+
+        $remaining = $employee->repair_expense_limit - $alreadyClaimed;
+
+        if ($totalAmount > $remaining) {
+            return redirect()->back()->withInput()->with('error',
+                'Limit भन्दा बढी भयो। बाँकी रु. ' . number_format($remaining) . ' मात्र claim गर्न मिल्छ।'
+            );
         }
 
    if ($employee->repair_expense_limit <= 0) {

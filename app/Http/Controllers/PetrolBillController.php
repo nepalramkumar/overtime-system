@@ -10,12 +10,17 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PetrolBillController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
     {
         $query = PetrolBill::with(['employee.position', 'month']);
 
         if ($request->filled('petrol_month_id')) {
             $query->where('petrol_month_id', $request->petrol_month_id);
+        }
+
+        if ($request->has('export') && $request->export === 'excel') {
+            $allBills = $query->orderBy('created_at', 'desc')->get();
+            return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\PetrolBillExport($allBills), 'Petrol_Bills_' . date('Ymd') . '.xlsx');
         }
 
         $bills = $query->orderBy('created_at', 'desc')->paginate(20);
@@ -108,7 +113,7 @@ class PetrolBillController extends Controller
             'total_quantity'  => $totalQuantity,
             'total_amount'    => $totalAmount,
             'remarks'         => $validated['remarks'] ?? null,
-            'isEdit'          => true,
+            'isEdit'          => false,
         ]);
 
         return redirect()->route('petrol.bills.index')->with('success', 'Petrol Bill सफलतापूर्वक दर्ता भयो।');
@@ -125,7 +130,7 @@ class PetrolBillController extends Controller
             ->exists();
     }
 
-    public function edit($id)
+   public function edit($id)
     {
         $bill = PetrolBill::with(['employee', 'month'])->findOrFail($id);
 
@@ -135,8 +140,10 @@ class PetrolBillController extends Controller
 
         $employees = Employee::orderBy('name')->get();
         $months = PetrolMonth::orderBy('id', 'desc')->get();
+        $canSelectAny = $this->canSelectAny();
+        $lockedEmployee = null;
 
-        return view('petrol.bills.form', compact('bill', 'employees', 'months'));
+        return view('petrol.bills.form', compact('bill', 'employees', 'months', 'canSelectAny', 'lockedEmployee'));
     }
 
     public function update(Request $request, $id)

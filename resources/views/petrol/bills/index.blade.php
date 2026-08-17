@@ -68,10 +68,12 @@
                            class="bg-purple-600 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-purple-700">
                             Print
                         </a>
-                        <a href="{{ route('petrol.bills.edit', $bill->id) }}"
-                           class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-blue-700 ml-1">
-                            Edit
-                        </a>
+                       @if(auth()->user()->role === 'admin' || \App\Models\RolePermission::where('role', auth()->user()->role)->where('permission', 'petrol.bills.manage')->exists() || $bill->isEdit)
+                            <a href="{{ route('petrol.bills.edit', $bill->id) }}"
+                               class="bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold hover:bg-blue-700 ml-1">
+                                Edit
+                            </a>
+                        @endif
                         @if(auth()->user()->role === 'admin' || (auth()->user()->role && \App\Models\RolePermission::where('role', auth()->user()->role)->where('permission', 'petrol.bills.manage')->exists()))
                             <form action="{{ route('petrol.bills.toggleEdit', $bill->id) }}" method="POST" class="inline">
                                 @csrf
@@ -91,6 +93,9 @@
                 <tr><td colspan="8" class="text-center p-4">कुनै Bill भेटिएन।</td></tr>
                 @endforelse
             </tbody>
+            <a href="{{ route('petrol.bills.index', array_merge(request()->all(), ['export' => 'excel'])) }}" class="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 inline-block mb-3">
+    Excel डाउनलोड
+</a>
         </table>
     </div>
 

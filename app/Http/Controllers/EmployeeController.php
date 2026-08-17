@@ -52,18 +52,15 @@ class EmployeeController extends Controller
         $employee = Employee::findOrFail($id);
 
         // नाम, विभाग, पद अब External API बाट Sync हुने भएकोले यहाँबाट सम्पादन गर्न मिल्दैन
-        $request->validate([
-            'employee_code'         => 'required|string|unique:employees,employee_code,' . $employee->id,
+      $request->validate([
             'vehicle_no'            => 'nullable|string|max:50',
             'petrol_quantity_limit' => 'nullable|integer|min:0',
             'repair_expense_limit'  => 'nullable|integer|min:0',
         ]);
 
         $employee->update($request->only([
-            'employee_code',
             'vehicle_no', 'petrol_quantity_limit', 'repair_expense_limit',
         ]));
-
         return redirect()->route('employees.index')->with('success', 'कर्मचारीको विवरण अपडेट भयो।');
     }
 
