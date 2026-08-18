@@ -26,8 +26,9 @@ class PetrolBillExport implements FromArray, WithHeadings
             foreach ($bill->date as $i => $d) {
                 if ($i === 0) {
                     // पहिलो row: सबै जानकारी + total
-                    $rows[] = [
+                        $rows[] = [
                         $sn++,
+                        $employee->employee_code ?? '-',
                         $monthLabel,
                         $employee->vehicle_no ?? '-',
                         $employee->position->level ?? '-',
@@ -42,8 +43,8 @@ class PetrolBillExport implements FromArray, WithHeadings
                     ];
                 } else {
                     // बाँकी row: date/quantity/rate/amount मात्र
-                    $rows[] = [
-                        '', '', '', '', '', '',
+                        $rows[] = [
+                        '', '', '', '', '', '', '',
                         $d,
                         $bill->quantity[$i] ?? '',
                         $bill->rate[$i] ?? '',
@@ -63,6 +64,6 @@ class PetrolBillExport implements FromArray, WithHeadings
 
     public function headings(): array
     {
-        return ["S.N", "Month", "Vehicle No", "Level", "Hierarchy", "Name", "Bill Date", "Quantity", "Rate", "Amount", "Total Quantity", "Total Amount"];
+                return ["S.N", "Employee Code", "Month", "Vehicle No", "Level", "Hierarchy", "Name", "Bill Date", "Quantity", "Rate", "Amount", "Total Quantity", "Total Amount"];
     }
 }

@@ -30,8 +30,9 @@ class RepairExpenseExport implements FromArray, WithHeadings
 
             foreach ($expenseRows as $i => $row) {
                 if ($i === 0) {
-                    $out[] = [
+                                        $out[] = [
                         $sn++,
+                        $employee->employee_code ?? '-',
                         $row['fy_year'],
                         $employee->vehicle_no ?? '-',
                         $employee->position->level ?? '-',
@@ -43,8 +44,8 @@ class RepairExpenseExport implements FromArray, WithHeadings
                         $totalAmount,
                     ];
                 } else {
-                    $out[] = [
-                        '', '', '', '', '', '',
+                                       $out[] = [
+                        '', '', '', '', '', '', '',
                         $row['bs_date'],
                         $row['description'],
                         $row['amount'],
@@ -63,6 +64,6 @@ class RepairExpenseExport implements FromArray, WithHeadings
 
     public function headings(): array
     {
-        return ["S.N", "FY Year", "Vehicle No", "Level", "Hierarchy", "Name", "Bill Date", "Description", "Amount", "Total Amount"];
+                return ["S.N", "Employee Code", "FY Year", "Vehicle No", "Level", "Hierarchy", "Name", "Bill Date", "Description", "Amount", "Total Amount"];
     }
 }

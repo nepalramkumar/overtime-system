@@ -16,7 +16,7 @@ class ProfileUpdateRequest extends FormRequest
      */
 public function rules(): array
     {
-        // नाम र इमेल अब External API बाट Sync हुने भएकोले, user आफैंले यहाँबाट बदल्न मिल्दैन
+        // नाम र इमेल अब External API बाट Sync हुने भएकोले, user आफैंले यहाँबाट बदल्न मिल्दैन.
         return [];
     }
 }

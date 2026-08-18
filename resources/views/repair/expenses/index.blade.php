@@ -50,6 +50,7 @@
             <thead class="bg-blue-700 text-white">
                 <tr>
                     <th class="p-3 border">सि.नं.</th>
+                    <th class="p-3 border">कर्मचारी कोड</th>
                     <th class="p-3 border">कर्मचारी</th>
                     <th class="p-3 border">पद</th>
                     <th class="p-3 border">FY Year</th>
@@ -66,6 +67,7 @@
                 @forelse($rows as $row)
                 <tr class="hover:bg-gray-50">
                     <td class="p-3 border text-center">{{ $sn++ }}</td>
+                    <td class="p-3 border">{{ $row['employee']->employee_code ?? '-' }}</td>
                     <td class="p-3 border">{{ $row['employee']->name ?? 'N/A' }}</td>
                     <td class="p-3 border">{{ $row['employee']->position->name ?? 'N/A' }}</td>
                     <td class="p-3 border">{{ $row['fy_year'] }}</td>

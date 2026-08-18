@@ -20,7 +20,7 @@
             @method('PUT')
 
             <p class="text-xs text-gray-500 mb-4 bg-gray-50 p-2 rounded">
-                ℹ️ नाम, विभाग, र पद भविष्यमा External API बाट स्वतः Sync हुने भएकोले, यहाँबाट सम्पादन गर्न मिल्दैन।
+                //ℹ️ नाम, विभाग, र पद भविष्यमा External API बाट स्वतः Sync हुने भएकोले, यहाँबाट सम्पादन गर्न मिल्दैन।.
             </p>
 
             <div class="mb-4">

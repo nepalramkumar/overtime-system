@@ -37,6 +37,7 @@
             <thead class="bg-blue-700 text-white">
                 <tr>
                     <th class="p-3 border">सि.नं.</th>
+                    <th class="p-3 border">कर्मचारी कोड</th>
                     <th class="p-3 border">कर्मचारी</th>
                     <th class="p-3 border">पद</th>
                     <th class="p-3 border">Month</th>
@@ -51,6 +52,7 @@
                 @forelse($bills as $bill)
                 <tr class="hover:bg-gray-50">
                     <td class="p-3 border text-center">{{ $sn++ }}</td>
+                    <td class="p-3 border">{{ $bill->employee->employee_code ?? '-' }}</td>
                     <td class="p-3 border">{{ $bill->employee->name ?? 'N/A' }}</td>
                     <td class="p-3 border">{{ $bill->employee->position->name ?? 'N/A' }}</td>
                     <td class="p-3 border">{{ $bill->month->month ?? '' }} - {{ $bill->month->year ?? '' }}</td>
