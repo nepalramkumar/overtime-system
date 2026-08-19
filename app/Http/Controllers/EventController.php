@@ -4,43 +4,85 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Event;
+use App\Models\Employee;
+use App\Models\OvertimeRecord;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
     // इभेन्ट लिस्ट हेर्नको लागि
-  public function index()
-{
-    $events = Event::orderBy('id', 'desc')->get();
-    return view('events.index', compact('events'));
-}
+    public function index()
+    {
+        $events = Event::orderBy('id', 'desc')->get();
 
-public function toggleActive($id)
-{
-    $event = Event::findOrFail($id);
-    $event->is_active = !$event->is_active;
-    $event->save();
+        $statusBreakdown = OvertimeRecord::select('event_id', 'status', DB::raw('count(*) as total'))
+            ->whereNotNull('event_id')
+            ->groupBy('event_id', 'status')
+            ->get()
+            ->groupBy('event_id');
 
-    return redirect()->back()->with('success', $event->is_active ? 'Event Enable गरियो।' : 'Event Disable गरियो।');
-}
+        foreach ($events as $event) {
+            $event->status_summary = $statusBreakdown->get($event->id, collect())
+                ->pluck('total', 'status');
+        }
+
+        return view('events.index', compact('events'));
+    }
+
+    public function toggleActive($id)
+    {
+        $event = Event::findOrFail($id);
+        $event->is_active = !$event->is_active;
+        $event->save();
+
+        return redirect()->back()->with('success', $event->is_active ? 'Event Enable गरियो।' : 'Event Disable गरियो।');
+    }
 
     // इभेन्ट दर्ता गर्ने फर्म देखाउनको लागि
-    public function create() {
-       
-        return view('events.create');
+    public function create()
+    {
+        $employees = Employee::where('is_active', true)->orderBy('name')->get();
+        return view('events.create', compact('employees'));
     }
 
     // डेटा सेभ गर्नको लागि
-    public function store(Request $request) {
-        $request->validate([
-            'event_name' => 'required',
-        ]);
-
+    public function store(Request $request)
+    {
+      $request->validate([
+    'event_name' => 'required',
+    'approver_employee_id' => 'nullable|exists:employees,id',
+    'recommender_employee_id' => 'nullable|exists:employees,id',
+]);
         $data = $request->all();
-        // चेकबक्सको लागि (टिक नलाग्दा false हुने)
         $data['is_tiffin_eligible'] = $request->has('is_tiffin_eligible') ? true : false;
-        // dd($data);
+
         Event::create($data);
 
         return redirect()->route('events.list')->with('success', 'कार्यक्रम दर्ता भयो!');
     }
+public function edit($id)
+{
+    $event = Event::findOrFail($id);
+    $employees = Employee::where('is_active', true)->orderBy('name')->get();
+    return view('events.edit', compact('event', 'employees'));
+}
+
+public function update(Request $request, $id)
+{
+    $event = Event::findOrFail($id);
+
+    $request->validate([
+        'event_name' => 'required',
+        'approver_employee_id' => 'nullable|exists:employees,id',
+        'recommender_employee_id' => 'nullable|exists:employees,id',
+    ]);
+
+    $data = $request->all();
+    $data['is_tiffin_eligible'] = $request->has('is_tiffin_eligible') ? true : false;
+
+    $event->update($data);
+
+    return redirect()->route('events.list')->with('success', 'कार्यक्रम अपडेट भयो!');
+}
+
 }

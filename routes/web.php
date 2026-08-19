@@ -13,6 +13,7 @@ use App\Http\Controllers\PurposeController;
 use App\Http\Controllers\PetrolBillController;
 use App\Http\Controllers\PetrolMonthController;
 use App\Http\Controllers\RepairExpenseController;
+use App\Http\Controllers\HrSyncController;
 
 // स्वागत पेज (Public)
 Route::get('/', function () {
@@ -103,6 +104,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/events/store', [EventController::class, 'store'])->middleware('role:events.manage')->name('events.store');
     Route::post('/events/{id}/toggle', [EventController::class, 'toggleActive'])->middleware('role:events.manage')->name('events.toggle');
     Route::get('/events/{id}/print', [OvertimeController::class, 'printEventSlip'])->middleware('role:overtime.entry')->name('events.print');
+    Route::get('/events/{id}/edit', [EventController::class, 'edit'])->middleware('role:events.manage')->name('events.edit');
+Route::put('/events/{id}', [EventController::class, 'update'])->middleware('role:events.manage')->name('events.update');
 
     // ------------------------------------------
     // User Management Routes
@@ -169,5 +172,7 @@ Route::get('/repair/expenses/{id}/print', [RepairExpenseController::class, 'prin
     // आफ्नो Vehicle No अपडेट गर्ने (Profile पेजबाट, जोसुकै logged-in employee ले आफ्नै मात्र)
     // ------------------------------------------
     Route::patch('/profile/vehicle', [EmployeeController::class, 'updateOwnVehicle'])->name('profile.vehicle.update');
+    Route::get('/hr-sync', [HrSyncController::class, 'index'])->middleware('role:hr.sync')->name('hr-sync.index');
+Route::post('/hr-sync/run', [HrSyncController::class, 'run'])->middleware('role:hr.sync')->name('hr-sync.run');
 
 });

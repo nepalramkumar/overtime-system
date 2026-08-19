@@ -5,6 +5,7 @@ namespace App\Services;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
+use PhpOffice\PhpWord\Style\Tab;
 
 class OvertimeWordService
 {
@@ -14,7 +15,7 @@ class OvertimeWordService
     private $logoPath;
 
     // आन्तरिक व्यवस्थापन शाखा (सधैं एउटै व्यक्ति भए यहाँ राख्नुहोस्, नभए खाली छोड्नुहोस्)
-    private $verifierName = '';
+    private $verifierName = 'कृष्णराम पौडेल';
     private $verifierPosition = 'अधिकृत';
 
     public function __construct()
@@ -22,13 +23,17 @@ class OvertimeWordService
         $this->logoPath = public_path('images/logo.jpg');
     }
 
-    protected function newDocument(): PhpWord
-    {
-        $phpWord = new PhpWord();
-        $phpWord->setDefaultFontName('Nirmala UI');
-        $phpWord->setDefaultFontSize(11);
-        return $phpWord;
-    }
+protected function newDocument(): PhpWord
+{
+    $phpWord = new PhpWord();
+    $phpWord->setDefaultFontName('Nirmala UI');
+    $phpWord->setDefaultFontSize(10);
+    $phpWord->setDefaultParagraphStyle([
+        'lineHeight' => 1.0,
+        'spacing' => 0,
+    ]);
+    return $phpWord;
+}
 
     // ==========================================
     // Letterhead: Logo + संस्थाको नाम + divider line
@@ -47,16 +52,21 @@ protected function addLetterhead($section)
     }
 }
 
-    protected function addTitleBlock($section, $bsDate)
-    {
-        $section->addText('आन्तरिक मेमो', ['bold' => true, 'underline' => 'single', 'size' => 12], ['alignment' => Jc::CENTER]);
-        $section->addText('अतिरिक्त समय कार्य गरेको प्रमाणित फाराम', ['bold' => true, 'size' => 14], ['alignment' => Jc::CENTER]);
-        $section->addTextBreak(1);
-        $section->addText('मिति: ' . $bsDate, [], ['alignment' => Jc::RIGHT]);
-        $section->addTextBreak(1);
-        $section->addText('श्री ................... निर्देशनालय प्रमुख ज्यू,');
-        $section->addTextBreak(1);
-    }
+ protected function addTitleBlock($section, $bsDate, $approver = null, $printedBy = null)
+{
+    $section->addText('आन्तरिक मेमो', ['bold' => true, 'underline' => 'single', 'size' => 11], ['alignment' => Jc::CENTER]);
+    $section->addText('अतिरिक्त समय कार्य गरेको प्रमाणित फाराम', ['bold' => true, 'size' => 13], ['alignment' => Jc::CENTER]);
+    $section->addTextBreak(1);
+    $section->addText('मिति: ' . $bsDate, [], ['alignment' => Jc::RIGHT]);
+    $section->addTextBreak(1);
+
+    $fromDepartment = $printedBy->department ?? '...................';
+    $toDepartment = $approver->department ?? '...................';
+
+    $section->addText('बाटः ' . $fromDepartment);
+    $section->addText('लाईः श्री ' . $toDepartment . ' निर्देशनालय प्रमुख ज्यू,');
+    $section->addTextBreak(1);
+}
 
     protected function addIntroGroup($section, $programName)
     {
@@ -259,31 +269,53 @@ protected function addLetterhead($section)
         $section->addTextBreak(1);
     }
 
-    protected function addSignatureBlock($section)
-    {
-        $section->addText('पेश गर्नेः', ['bold' => true]);
-        $section->addText('नाम: ___________________' . str_repeat(' ', 5) . 'पद: ___________________');
-        $section->addText('दस्तखत: ___________________');
-        $section->addTextBreak(1);
+protected function addSignatureBlock($section, $printedBy = null, $approver = null, $recommender = null)
+{
+    $tabStyle = ['tabs' => [new Tab('left', 3000), new Tab('left', 2500)], 'spaceBefore' => 0, 'spaceAfter' => 200];
 
-        $section->addText('स्वीकृत गर्नेः', ['bold' => true]);
-        $section->addText('नाम: ___________________' . str_repeat(' ', 5) . 'पद: ___________________');
-        $section->addText('दस्तखत र मिति: ___________________');
-        $section->addTextBreak(1);
+    // पेश गर्नेः — logged-in user (print गर्ने) बाट auto
+    $section->addText('पेश गर्नेः', ['bold' => true], ['spaceAfter' => 0]);
+    $section->addText(
+        'नाम: ' . ($printedBy->name ?? '..........................') . "\t" .
+        'पद: ' . ($printedBy->position->name ?? $printedBy->designation ?? '..........................') . "\t" .
+        'दस्तखत: ..........................',
+        [],
+        $tabStyle
+    );
 
-        $section->addText(str_repeat('=', 55));
-        $section->addText('आन्तरिक व्यवस्थापन शाखा', ['bold' => true]);
-        $section->addText('माथि उल्लेखित कर्मचारीहरुले उल्लेख गरे बमोजिम समय अतिरिक्त काम गरेको दैनिक हाजिरीका अभिलेखमा छ।');
-        $section->addText('नाम: ' . $this->verifierName);
-        $section->addText('पद: ' . $this->verifierPosition . str_repeat(' ', 15) . 'हस्ताक्षर: ...................' . str_repeat(' ', 10) . 'मिति: ...................');
-        $section->addTextBreak(1);
+    // सिफारिस गर्ने — event मा setup गरिएको recommender बाट auto
+    $section->addText('सिफारिस गर्ने', ['bold' => true], ['spaceAfter' => 0]);
+    $section->addText(
+        'नाम: ' . ($recommender->name ?? '..........................') . "\t" .
+        'पद: ' . ($recommender->position->name ?? '..........................') . "\t" .
+        'दस्तखत र मिति: ..........................',
+        [],
+        $tabStyle
+    );
 
-        $section->addText('निजहरुले माथि उल्लेख गर बमोजिमको अतिरिक्त समय काम गरेको व्यहोरा प्रमाणित गर्दछु।');
-        $section->addText(str_repeat(' ', 40) . 'निर्देशनालय प्रमुख', ['bold' => true]);
-        $section->addText('नाम: ...................');
-        $section->addText('हस्ताक्षर: ...................' . str_repeat(' ', 10) . 'मिति: ...................');
-    }
+    $section->addText(str_repeat('-', 110));
+    $section->addText('आन्तरिक व्यवस्थापन शाखा', ['bold' => true], ['alignment' => Jc::CENTER,'spaceAfter' => 0]);
+    $section->addText('माथि उल्लेखित कर्मचारीहरुले उल्लेख गरे बमोजिम समय अतिरिक्त काम गरेको दैनिक हाजिरीका अभिलेखमा छ।', [], ['spaceAfter' =>100]);
+    $section->addText(
+        'नाम: ' . $this->verifierName . "\t" .
+        'पद: ' . $this->verifierPosition . "\t" .
+        'हस्ताक्षर: ..........................         मिति: ..........................',
+        [],
+        $tabStyle
+    );
+ $section->addText(str_repeat('-', 110));
+    $section->addText('निजहरुले माथि उल्लेख गर बमोजिमको अतिरिक्त समय काम गरेको व्यहोरा प्रमाणित गर्दछु।', [], ['spaceAfter' => 200]);
 
+    $departmentName = $approver->department ?? '';
+    $section->addText( $departmentName . ' निर्देशनालय प्रमुख', ['bold' => true], ['alignment' => Jc::CENTER,'spaceAfter' => 200]);
+    $section->addText(
+        'नाम: ' . ($approver->name ?? '..........................') . "\t" .
+        'हस्ताक्षर: ..........................' . "\t" .
+        '   मिति: ..........................',
+        [],
+        $tabStyle
+    );
+}
     protected function addDetailPage($section, $records)
     {
         $section->addPageBreak();
@@ -339,51 +371,54 @@ protected function addLetterhead($section)
     // ==========================================
     // Individual Format
     // ==========================================
-    public function generateIndividual($records, $employee)
-    {
-        $phpWord = $this->newDocument();
-        $section = $phpWord->addSection(['marginTop' => 15]);
+    public function generateIndividual($records, $employee, $event = null, $printedBy = null)
+{
+    $phpWord = $this->newDocument();
+    $section = $phpWord->addSection(['marginTop' => 15]);
 
-        $bsToday = adToBs(date('Y-m-d'));
+    $bsToday = adToBs(date('Y-m-d'));
+    $approver = $event->approver ?? null;
+    $recommender = $event->recommender ?? null;
 
-        $this->addLetterhead($section);
-        $this->addTitleBlock($section, $bsToday);
-        $this->addIntroIndividual($section);
+    $this->addLetterhead($section);
+    $this->addTitleBlock($section, $bsToday, $approver, $printedBy);
+    $this->addIntroIndividual($section);
 
-        $this->addIndividualTable($section, $records);
-        $this->addSignatureBlock($section);
+    $this->addIndividualTable($section, $records);
+    $this->addSignatureBlock($section, $printedBy, $approver, $recommender);
 
-        if (count($records) > 1) {
-            $this->addDetailPage($section, $records);
-        }
-
-        $filename = 'OT_Slip_' . str_replace(' ', '_', $employee->name) . '_' . date('Ymd') . '.docx';
-        return $this->saveToDownload($phpWord, $filename);
+    if (count($records) > 1) {
+        $this->addDetailPage($section, $records);
     }
 
+    $filename = 'OT_Slip_' . str_replace(' ', '_', $employee->name) . '_' . date('Ymd') . '.docx';
+    return $this->saveToDownload($phpWord, $filename);
+}
     // ==========================================
     // Group Format
     // ==========================================
-    public function generateGroup($records, $title)
-    {
-        $phpWord = $this->newDocument();
-       $section = $phpWord->addSection(['marginTop' => 15]);
+    public function generateGroup($records, $title, $event = null, $printedBy = null)
+{
+    $phpWord = $this->newDocument();
+    $section = $phpWord->addSection(['marginTop' => 15]);
 
-        $bsToday = adToBs(date('Y-m-d'));
+    $bsToday = adToBs(date('Y-m-d'));
+    $approver = $event->approver ?? null;
+    $recommender = $event->recommender ?? null;
 
-        $this->addLetterhead($section);
-        $this->addTitleBlock($section, $bsToday);
-        $this->addIntroGroup($section, $title);
+    $this->addLetterhead($section);
+    $this->addTitleBlock($section, $bsToday, $approver, $printedBy);
+    $this->addIntroGroup($section, $title);
 
-        $this->addMainTable($section, $records, $title);
-        $this->addSignatureBlock($section);
+    $this->addMainTable($section, $records, $title);
+    $this->addSignatureBlock($section, $printedBy, $approver, $recommender);
 
-        $this->addDetailPage($section, $records);
+    $this->addDetailPage($section, $records);
 
-        $filename = 'OT_Group_' . str_replace(' ', '_', $title) . '_' . date('Ymd') . '.docx';
-        return $this->saveToDownload($phpWord, $filename);
-    }
+    $filename = 'OT_Group_' . str_replace(' ', '_', $title) . '_' . date('Ymd') . '.docx';
+    return $this->saveToDownload($phpWord, $filename);
 
+}
     protected function saveToDownload(PhpWord $phpWord, string $filename)
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'ot_') . '.docx';
@@ -392,4 +427,5 @@ protected function addLetterhead($section)
 
         return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
+    
 }

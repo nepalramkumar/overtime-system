@@ -25,6 +25,7 @@ class PermissionController extends Controller
 'repair.expenses.view'   => 'Repair Expense हेर्ने',
 'petrol.bills.entry'    => 'Petrol Bill आफ्नै entry गर्ने',
 'repair.expenses.entry' => 'Repair Expense आफ्नै entry गर्ने',
+'hr.sync' => 'HR System बाट Staff Data Sync गर्ने',
 
 ];
 

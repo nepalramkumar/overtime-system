@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,29 +14,22 @@ use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
 
     /**
      * Attempt to authenticate the request's credentials.
+     * 'email' field मा email वा employee_code दुवै स्वीकार गर्छ।
      *
      * @throws ValidationException
      */
@@ -42,7 +37,10 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $loginInput = $this->string('email');
+        $resolvedEmail = $this->resolveEmail($loginInput);
+
+        if (!$resolvedEmail || !Auth::attempt(['email' => $resolvedEmail, 'password' => $this->input('password')], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -54,10 +52,24 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Ensure the login request is not rate limited.
-     *
-     * @throws ValidationException
+     * Input email format मा भए त्यही फर्काउने, नत्र employee_code ठानेर
+     * त्यससँग जोडिएको User को email पत्ता लगाउने।
      */
+    protected function resolveEmail(string $input): ?string
+    {
+        if (str_contains($input, '@')) {
+            return $input;
+        }
+
+        $employee = Employee::where('employee_code', $input)->first();
+        if (!$employee) {
+            return null;
+        }
+
+        $user = User::where('employee_id', $employee->id)->first();
+        return $user?->email;
+    }
+
     public function ensureIsNotRateLimited(): void
     {
         if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
@@ -76,9 +88,6 @@ class LoginRequest extends FormRequest
         ]);
     }
 
-    /**
-     * Get the rate limiting throttle key for the request.
-     */
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());

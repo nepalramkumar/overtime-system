@@ -6,8 +6,7 @@
         </h2>
 
         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            <!-- <?php echo e(__('नाम र इमेल External API बाट स्वतः Sync हुने भएकोले, यहाँबाट सम्पादन गर्न मिल्दैन।.')); ?> -->
-
+            <!-- <?php echo e(__('नाम र इमेल External API बाट स्वतः Sync हुने भएकोले, यहाँबाट सम्पादन गर्न मिल्दैन।')); ?> -->
         </p>
     </header>
 

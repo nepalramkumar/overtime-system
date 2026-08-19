@@ -127,7 +127,7 @@
             कुनै डेटा भेटिएन।
         </div>
     @else
-        <h3 class="text-lg font-bold text-gray-700 mb-2">कार्यक्रम अनुसार घण्टा (Programme-wise Hours)</h3>
+        <h3 class="text-lg font-bold text-gray-700 mb-2">कार्यक्रम अनुसार OT Hours Decimal (Programme-wise OT Hours Decimal)</h3>
         <div class="overflow-x-auto bg-white rounded-lg shadow-sm mb-6">
             <table class="w-full border-collapse text-sm">
                 <thead>
@@ -153,7 +153,7 @@
                         <td class="p-2 border">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
                         @foreach($pivotColumns as $col)
                             <td class="p-2 border text-center">
-                                {{ isset($pivotHours[$empId][$col]) ? hoursToHm($pivotHours[$empId][$col]) : '' }}
+                                {{ isset($pivotHours[$empId][$col]) ? number_format($pivotHours[$empId][$col], 2) : '' }}
                             </td>
                         @endforeach
                     </tr>

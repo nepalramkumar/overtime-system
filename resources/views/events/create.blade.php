@@ -41,6 +41,28 @@
                 <input type="time" name="end_time" class="w-full mt-1 p-2 border rounded-md">
             </div>
         </div>
+        <div>
+    <label class="block text-gray-700 font-semibold mb-1">सिफारिस गर्ने</label>
+    <select name="recommender_employee_id" class="w-full p-2 border rounded">
+        <option value="">-- छान्नुहोस् --</option>
+        @foreach($employees as $emp)
+            <option value="{{ $emp->id }}">
+                {{ $emp->name }} — {{ $emp->position->name ?? '' }}
+            </option>
+        @endforeach
+    </select>
+</div>
+        <div>
+    <label class="block text-gray-700 font-semibold mb-1">स्वीकृत गर्ने (निर्देशनालय प्रमुख)</label>
+    <select name="approver_employee_id" class="w-full p-2 border rounded">
+        <option value="">-- छान्नुहोस् --</option>
+        @foreach($employees as $emp)
+            <option value="{{ $emp->id }}">
+                {{ $emp->name }} — {{ $emp->position->name ?? '' }} ({{ $emp->department }})
+            </option>
+        @endforeach
+    </select>
+</div>
         
         <div class="flex items-center gap-2 bg-gray-50 p-3 rounded-md">
             <input type="checkbox" name="is_tiffin_eligible" value="1" class="w-5 h-5 text-blue-600">

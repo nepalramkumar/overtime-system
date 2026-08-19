@@ -1,112 +1,139 @@
 @extends('layouts.app')
 
 @section('content')
-
-    <div class="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-md">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">Overtime & Tiffin Entry</h2>
-
-        @if(session('success'))
-            <div class="bg-green-100 text-green-700 p-3 rounded mb-4">{{ session('success') }}</div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-100 text-red-700 p-3 rounded mb-4">{{ session('error') }}</div>
-        @endif
-
-        <form action="{{ route('overtime.store') }}" method="POST" class="space-y-4">
-            @csrf
-
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Select Employee</label>
-                @if($canSelectAny)
-                    <select name="employee_id" id="employee-select" class="w-full p-2 border rounded" required>
-                        <option value="">-- नाम टाइप गर्नुहोस् --</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">
-                                {{ $emp->name }} (ID: {{ $emp->id }}) - {{ $emp->designation }}
-                            </option>
-                        @endforeach
-                    </select>
-                @else
-                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
-                        {{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? '' }})
-                    </div>
-                    <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
-                @endif
-            </div>
-
-            @if(isset($selectedEventId) && $selectedEventId)
-                @foreach($events as $event)
-                    @if($event->id == $selectedEventId)
-                        <div class="bg-blue-50 p-3 rounded border border-blue-200 mb-4">
-                            <label class="block text-blue-700 font-bold text-xs uppercase tracking-wide">Selected Event / Project</label>
-                            <span class="text-gray-800 font-semibold text-lg">{{ $event->event_name }} ({{ $event->department }})</span>
-                            <input type="hidden" name="event_id" value="{{ $event->id }}">
-                        </div>
-                    @endif
-                @endforeach
-            @else
-            @if(!isset($selectedEventId) || !$selectedEventId)
-<div>
-    <label class="block text-gray-700 font-semibold mb-1">Purpose (General OT भए, धेरै दिन चल्ने काम भए मात्र छान्नुहोस्)</label>
-    <select name="purpose_id" class="w-full p-2 border rounded">
-        <option value="">-- एक दिनको मात्र काम (Purpose चाहिँदैन) --</option>
-        @foreach(\App\Models\Purpose::where('is_active', true)->orderBy('id', 'desc')->get() as $purpose)
-            <option value="{{ $purpose->id }}">{{ $purpose->name }}</option>
-        @endforeach
-    </select>
-    <p class="text-xs text-gray-500 mt-1">
-        चाहिएको Purpose list मा छैन भने,
-        <a href="{{ route('purposes.index') }}" target="_blank" class="text-blue-600 underline">यहाँ नयाँ थप्नुहोस्</a>।
-    </p>
-</div>
-@endif
-                <div class="bg-gray-50 p-3 rounded border border-gray-200 mb-4">
-                    <label class="block text-gray-500 font-bold text-xs uppercase tracking-wide">OT Category</label>
-                    <span class="text-gray-700 font-semibold">सामान्य प्रयोजन (General Purpose OT)</span>
-                    <input type="hidden" name="event_id" value="">
-                </div>
-            @endif
-
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Date</label>
-                <input type="date" name="ot_date" value="{{ old('ot_date', date('Y-m-d')) }}" class="w-full p-2 border rounded" required>
-            </div>
-
-            <div class="flex items-center bg-yellow-50 p-2 rounded border border-yellow-200">
-                <input type="checkbox" name="is_holiday" id="is_holiday" value="1" {{ old('is_holiday') ? 'checked' : '' }} class="w-4 h-4 mr-2 text-blue-600 border-gray-300 rounded">
-                <label for="is_holiday" class="text-gray-700 font-medium select-none cursor-pointer">Is this a Holiday? (विदाको दिन हो?)</label>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-1">From Time (सुरुको समय)</label>
-                    <input type="time" name="from_time" value="{{ old('from_time') }}" class="w-full p-2 border rounded" required>
-                </div>
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-1">To Time (सकिने समय)</label>
-                    <input type="time" name="to_time" value="{{ old('to_time') }}" class="w-full p-2 border rounded" required>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Remarks</label>
-                <textarea name="remarks" class="w-full p-2 border rounded" rows="2">{{ old('remarks') }}</textarea>
-            </div>
-
-            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition">
-                Submit Overtime
-            </button>
-        </form>
+<div class="max-w-xl mx-auto">
+    <!-- Form Title -->
+    <div class="mb-6 text-center">
+        <h2 class="text-2xl font-bold text-slate-800">Overtime & Tiffin Entry</h2>
+        <p class="text-xs text-slate-500 mt-1">ओभरटाइम तथा खाजा खर्च प्रविष्टि फारम</p>
     </div>
 
+    <form action="{{ route('overtime.store') }}" method="POST" class="space-y-4">
+        @csrf
+
+        <!-- Employee Select -->
+        <div>
+            <label class="block text-slate-700 font-semibold text-sm mb-1">
+                Select Employee <span class="text-rose-500">*</span>
+            </label>
+            @if($canSelectAny)
+                <select name="employee_id" id="employee-select" class="w-full p-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500" required>
+                    <option value="">-- नाम वा ID टाइप गरेर खोज्नुहोस् --</option>
+                    @foreach($employees as $emp)
+                        <option value="{{ $emp->id }}" {{ old('employee_id') == $emp->id ? 'selected' : '' }}>
+                            {{ $emp->name }} (ID: {{ $emp->id }}) - {{ $emp->designation ?? 'N/A' }}
+                        </option>
+                    @endforeach
+                </select>
+            @else
+                <div class="w-full p-2.5 border border-slate-200 rounded-lg bg-slate-100 text-slate-700 font-semibold text-sm flex items-center justify-between">
+                    <span>{{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? 'ID: ' . ($lockedEmployee->id ?? '') }})</span>
+                    <i class="fas fa-lock text-slate-400"></i>
+                </div>
+                <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
+            @endif
+            @error('employee_id')
+                <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Event / OT Category Banner -->
+        @if(!empty($selectedEventId) && isset($events))
+            @php
+                $currentEvent = $events->firstWhere('id', $selectedEventId);
+            @endphp
+            @if($currentEvent)
+                <div class="bg-emerald-50 p-3.5 rounded-lg border border-emerald-200">
+                    <label class="block text-emerald-800 font-bold text-xs uppercase tracking-wide">Selected Event / Project</label>
+                    <span class="text-slate-800 font-semibold text-base block mt-0.5">{{ $currentEvent->event_name }} ({{ $currentEvent->department }})</span>
+                    <input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
+                </div>
+            @endif
+        @else
+            <div class="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                <label class="block text-slate-500 font-bold text-xs uppercase tracking-wide">OT Category</label>
+                <span class="text-slate-700 font-semibold text-sm block mt-0.5">सामान्य प्रयोजन (General Purpose OT)</span>
+                <input type="hidden" name="event_id" value="">
+            </div>
+        @endif
+
+        <!-- Date Input -->
+        <div>
+            <label class="block text-slate-700 font-semibold text-sm mb-1">
+                Date <span class="text-rose-500">*</span>
+            </label>
+            <input type="date" name="ot_date" value="{{ old('ot_date', date('Y-m-d')) }}" 
+                   class="w-full p-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm" required>
+            @error('ot_date')
+                <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Is Holiday Checkbox -->
+        <div class="flex items-center bg-amber-50 p-3 rounded-lg border border-amber-200/80">
+            <input type="checkbox" name="is_holiday" id="is_holiday" value="1" {{ old('is_holiday') ? 'checked' : '' }} 
+                   class="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500">
+            <label for="is_holiday" class="ml-2 text-sm text-slate-700 font-medium select-none cursor-pointer">
+                Is this a Holiday? (सार्वजनिक वा हप्ताको विदाको दिन हो?)
+            </label>
+        </div>
+
+        <!-- Time Inputs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-slate-700 font-semibold text-sm mb-1">
+                    From Time (सुरुको समय) <span class="text-rose-500">*</span>
+                </label>
+                <input type="time" name="from_time" value="{{ old('from_time') }}" 
+                       class="w-full p-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm" required>
+                @error('from_time')
+                    <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label class="block text-slate-700 font-semibold text-sm mb-1">
+                    To Time (सकिने समय) <span class="text-rose-500">*</span>
+                </label>
+                <input type="time" name="to_time" value="{{ old('to_time') }}" 
+                       class="w-full p-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm" required>
+                @error('to_time')
+                    <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
+        <!-- Remarks -->
+        <div>
+            <label class="block text-slate-700 font-semibold text-sm mb-1">Remarks (कैफियत)</label>
+            <textarea name="remarks" class="w-full p-2.5 border border-slate-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm" rows="2" placeholder="कामको संक्षिप्त विवरण...">{{ old('remarks') }}</textarea>
+            @error('remarks')
+                <p class="text-rose-500 text-xs mt-1">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg shadow transition duration-150 flex items-center justify-center gap-2">
+            <i class="fas fa-paper-plane"></i>
+            <span>Submit Overtime</span>
+        </button>
+    </form>
+</div>
+
+<!-- TomSelect Integration -->
 @if($canSelectAny)
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
-    new TomSelect("#employee-select",{
-        create: false,
-        sortField: {
-            field: "text",
-            direction: "asc"
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectEl = document.getElementById('employee-select');
+        if (selectEl) {
+            new TomSelect("#employee-select", {
+                create: false,
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                }
+            });
         }
     });
 </script>

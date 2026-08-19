@@ -40,7 +40,9 @@ class PivotReportExport implements FromArray
                 $empGroup['employee']->position->name ?? 'N/A',
             ];
             foreach ($this->pivotColumns as $col) {
-                $row[] = isset($this->pivotHours[$empId][$col]) ? hoursToHm($this->pivotHours[$empId][$col]) : '';
+                $row[] = isset($this->pivotHours[$empId][$col])
+    ? round($this->pivotHours[$empId][$col], 2)
+    : '';
             }
             $rows[] = $row;
         }

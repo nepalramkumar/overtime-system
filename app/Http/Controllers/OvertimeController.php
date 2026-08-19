@@ -220,13 +220,14 @@ public function printSlip($id)
 {
     $record = OvertimeRecord::with('employee.position', 'event', 'purpose')->findOrFail($id);
     $wordService = new OvertimeWordService();
+    $printedBy = auth()->user()->employee ?? null;
 
     // Case 1: Formal Event भएको — सधैं Group format
     if ($record->event_id) {
         $records = OvertimeRecord::with('employee.position', 'event')
                     ->where('event_id', $record->event_id)
                     ->get();
-        return $wordService->generateGroup($records, $record->event->event_name);
+        return $wordService->generateGroup($records, $record->event->event_name, $record->event, $printedBy);
     }
 
     // Case 2: Purpose भएको — कति जना छन् त्यसमा भर पर्छ
@@ -239,18 +240,17 @@ public function printSlip($id)
 
         if ($distinctEmployees->count() > 1) {
             // धेरै जना — Group format
-            return $wordService->generateGroup($records, $record->purpose->name);
+            return $wordService->generateGroup($records, $record->purpose->name, null, $printedBy);
         } else {
             // एउटै जना, धेरै दिन भए पनि — Individual format
-            return $wordService->generateIndividual($records, $record->employee);
+            return $wordService->generateIndividual($records, $record->employee, null, $printedBy);
         }
     }
 
     // Case 3: न Event, न Purpose — एउटै दिनको Individual OT
     $records = collect([$record]);
-    return $wordService->generateIndividual($records, $record->employee);
+    return $wordService->generateIndividual($records, $record->employee, null, $printedBy);
 }
-
 public function printEventSlip($eventId)
 {
     $event = Event::findOrFail($eventId);
@@ -264,8 +264,10 @@ public function printEventSlip($eventId)
     }
 
     $wordService = new OvertimeWordService();
-    return $wordService->generateGroup($records, $event->event_name);
+    $printedBy = auth()->user()->employee ?? null;
+    return $wordService->generateGroup($records, $event->event_name, $event, $printedBy);
 }
+
 public function printPurposeSlip($purposeId)
 {
     $purpose = \App\Models\Purpose::findOrFail($purposeId);
@@ -279,15 +281,14 @@ public function printPurposeSlip($purposeId)
     }
 
     $wordService = new OvertimeWordService();
+    $printedBy = auth()->user()->employee ?? null;
     $distinctEmployees = $records->pluck('employee_id')->unique();
 
     if ($distinctEmployees->count() > 1) {
-        // धेरै जना — Group format
-        return $wordService->generateGroup($records, $purpose->name);
+        return $wordService->generateGroup($records, $purpose->name, null, $printedBy);
     } else {
-        // एउटै जना, धेरै दिन भए पनि — Individual format
         $employee = $records->first()->employee;
-        return $wordService->generateIndividual($records, $employee);
+        return $wordService->generateIndividual($records, $employee, null, $printedBy);
     }
 }
 public function pendingList(Request $request)
