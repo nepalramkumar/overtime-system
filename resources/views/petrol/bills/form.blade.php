@@ -1,26 +1,40 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-md">
-    <h2 class="text-2xl font-bold mb-6 text-gray-800 text-center">
-        {{ $bill ? 'Petrol Bill Edit गर्नुहोस्' : 'नयाँ Petrol Bill' }}
-    </h2>
+<div class="max-w-4xl mx-auto space-y-6">
 
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">
+                {{ $bill ? '✏️ Petrol Bill Edit गर्नुहोस्' : '⛽ नयाँ Petrol Bill Entry' }}
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">पेट्रोल/डिजेल खर्चको भौचर तथा विवरण प्रविष्टि</p>
+        </div>
+    </div>
+
+    <!-- Flash & Error Alerts -->
     @if(session('error'))
-        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
-            {{ session('error') }}
+        <div class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl shadow-sm text-sm">
+            <div class="flex items-center gap-2 font-medium">
+                <i class="fas fa-exclamation-circle text-rose-600"></i>
+                <span>{{ session('error') }}</span>
+            </div>
             @if(session('vehicle_missing_employee_id'))
-                <br>
-                <a href="{{ session('is_self_entry') ? route('profile.edit') : route('employees.edit', session('vehicle_missing_employee_id')) }}"
-                   class="underline font-semibold">
-                    यहाँबाट Vehicle No थप्नुहोस् →
-                </a>
+                <div class="mt-2 text-xs">
+                    <a href="{{ session('is_self_entry') ? route('profile.edit') : route('employees.edit', session('vehicle_missing_employee_id')) }}"
+                       class="inline-flex items-center gap-1 font-semibold text-rose-700 underline hover:text-rose-900">
+                        यहाँबाट Vehicle No थप्नुहोस् →
+                    </a>
+                </div>
             @endif
         </div>
     @endif
+
     @if($errors->any())
-        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
-            <ul class="list-disc list-inside">
+        <div class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl shadow-sm text-sm">
+            <div class="font-semibold mb-1 text-xs">कृपया तलका त्रुटिहरू सच्याउनुहोस्:</div>
+            <ul class="list-disc list-inside space-y-1 text-xs">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -28,158 +42,259 @@
         </div>
     @endif
 
-    <form action="{{ $bill ? route('petrol.bills.update', $bill->id) : route('petrol.bills.store') }}" method="POST">
-        @csrf
-        @if($bill)
-            @method('PUT')
-        @endif
+    <!-- Form Container -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6 sm:p-8">
+        <form action="{{ $bill ? route('petrol.bills.update', $bill->id) : route('petrol.bills.store') }}" method="POST">
+            @csrf
+            @if($bill)
+                @method('PUT')
+            @endif
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-           <div>
-                <label class="block text-gray-700 font-semibold mb-1">कर्मचारी</label>
-                @if($bill)
-                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
-                        {{ $bill->employee->name ?? 'N/A' }} ({{ $bill->employee->employee_code ?? '' }})
-                    </div>
-                    <input type="hidden" name="employee_id" value="{{ $bill->employee_id }}">
-                @elseif($canSelectAny)
-                    <select name="employee_id" id="employee_id" class="w-full p-2 border rounded" required>
-                        <option value="">-- छान्नुहोस् --</option>
-                        @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}" data-vehicle="{{ $emp->vehicle_no }}">{{ $emp->name }} ({{ $emp->employee_code }})</option>
-                        @endforeach
-                    </select>
-                @else
-                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
-                        {{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? '' }})
-                    </div>
-                    <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
-                @endif
+            <!-- Main Inputs Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+                
+                <!-- Employee Selection -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">कर्मचारी <span class="text-rose-500">*</span></label>
+                    @if($bill)
+                        <div class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-medium text-sm">
+                            {{ $bill->employee->name ?? 'N/A' }} ({{ $bill->employee->employee_code ?? '' }})
+                        </div>
+                        <input type="hidden" name="employee_id" value="{{ $bill->employee_id }}">
+                    @elseif($canSelectAny)
+                        <select name="employee_id" id="employee_id" class="w-full border border-slate-300 rounded-lg text-sm" required>
+                            <option value="">-- कर्मचारी छान्नुहोस् --</option>
+                            @foreach($employees as $emp)
+                                <option value="{{ $emp->id }}" data-vehicle="{{ $emp->vehicle_no }}">
+                                    {{ $emp->name }} ({{ $emp->employee_code }})
+                                </option>
+                            @endforeach
+                        </select>
+                    @else
+                        <div class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-medium text-sm">
+                            {{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? '' }})
+                        </div>
+                        <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
+                    @endif
 
-                <div id="vehicle-warning" class="hidden bg-red-50 border border-red-200 text-red-700 p-2 rounded mt-2 text-sm">
-                    यस कर्मचारीको Vehicle No अद्यावधिक गरिएको छैन।
-                    <a id="vehicle-warning-link" href="#" class="underline font-semibold" target="_blank">यहाँ थप्नुहोस्</a>
+                    <div id="vehicle-warning" class="hidden bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg mt-2 text-xs flex items-center justify-between">
+                        <span>⚠️ यस कर्मचारीको Vehicle No अद्यावधिक गरिएको छैन।</span>
+                        <a id="vehicle-warning-link" href="#" class="underline font-bold text-amber-900 hover:text-black ml-2" target="_blank">
+                            यहाँ थप्नुहोस्
+                        </a>
+                    </div>
                 </div>
-            </div>
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Month</label>
-                @if($bill)
-                    <div class="w-full p-2 border rounded bg-gray-100 text-gray-700 font-semibold">
-                        {{ $bill->month->month ?? '' }} - {{ $bill->month->year ?? '' }}
-                    </div>
-                @else
-                    <select name="petrol_month_id" class="w-full p-2 border rounded" required>
-                        <option value="">-- छान्नुहोस् --</option>
+
+                <!-- Month Selection (Searchable Select Box) -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">महिना <span class="text-rose-500">*</span></label>
+                    <select name="petrol_month_id" id="petrol_month_id" class="w-full border border-slate-300 rounded-lg text-sm" required>
+                        <option value="">-- महिना खोज्नुहोस् / छान्नुहोस् --</option>
                         @foreach($months as $m)
-                            <option value="{{ $m->id }}">{{ $m->month }} - {{ $m->year }}</option>
+                            <option value="{{ $m->id }}" {{ (old('petrol_month_id', $bill->petrol_month_id ?? '') == $m->id) ? 'selected' : '' }}>
+                                {{ $m->month }} - {{ $m->year }}
+                            </option>
                         @endforeach
                     </select>
-                @endif
+                </div>
+
             </div>
-        </div>
 
-        <h3 class="font-semibold text-gray-700 mb-2">Petrol भरेको विवरण</h3>
-        <table class="w-full border-collapse mb-2" id="rows-table">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border p-2 text-sm">मिति</th>
-                    <th class="border p-2 text-sm">परिमाण (Litre)</th>
-                    <th class="border p-2 text-sm">दर</th>
-                    <th class="border p-2 text-sm">रकम</th>
-                    <th class="border p-2 text-sm w-12"></th>
-                </tr>
-            </thead>
-            <tbody id="rows-body">
-               @php
-                    $existingDates = old('date') ?? ($bill ? $bill->date : [now()->format('Y-m-d')]);
-                    $existingQty   = old('quantity') ?? ($bill ? $bill->quantity : ['']);
-                    $existingRate  = old('rate') ?? ($bill ? $bill->rate : ['']);
-                    $existingAmt   = old('amount') ?? ($bill ? $bill->amount : ['']);
-                @endphp
-                @foreach($existingDates as $i => $d)
-                <tr>
-                    <td class="border p-1"><input type="date" name="date[]" value="{{ $d }}" class="w-full p-1 border rounded row-date" required></td>
-                    <td class="border p-1"><input type="number" step="0.01" name="quantity[]" value="{{ $existingQty[$i] ?? '' }}" class="w-full p-1 border rounded row-qty" required></td>
-                    <td class="border p-1"><input type="number" step="0.01" name="rate[]" value="{{ $existingRate[$i] ?? '' }}" class="w-full p-1 border rounded row-rate" required></td>
-                    <td class="border p-1"><input type="number" step="0.01" name="amount[]" value="{{ $existingAmt[$i] ?? '' }}" class="w-full p-1 border rounded row-amount" required></td>
-                    <td class="border p-1 text-center"><button type="button" class="text-red-600 font-bold remove-row">✕</button></td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        <button type="button" id="add-row" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-300 mb-4">
-            + थप पंक्ति थप्नुहोस्
-        </button>
+            <!-- Dynamic Table Header -->
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-semibold text-slate-800 text-sm">⛽ Petrol भरेको विवरण</h3>
+                <button type="button" id="add-row" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg border border-slate-300 transition inline-flex items-center gap-1">
+                    <i class="fas fa-plus text-[10px]"></i>
+                    <span>थप पंक्ति थप्नुहोस्</span>
+                </button>
+            </div>
 
-        <div class="mb-4">
-            <label class="block text-gray-700 font-semibold mb-1">कैफियत</label>
-            <textarea name="remarks" class="w-full p-2 border rounded" rows="2">{{ $bill->remarks ?? '' }}</textarea>
-        </div>
+            <!-- Table -->
+            <div class="overflow-x-auto border border-slate-200 rounded-lg shadow-sm mb-6">
+                <table class="w-full border-collapse text-left text-xs" id="rows-table">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider font-semibold">
+                        <tr>
+                            <th class="p-3 border-r border-slate-200">मिति</th>
+                            <th class="p-3 border-r border-slate-200">परिमाण (Litre)</th>
+                            <th class="p-3 border-r border-slate-200">दर (रु.)</th>
+                            <th class="p-3 border-r border-slate-200">जम्मा रकम (रु.)</th>
+                            <th class="p-3 text-center w-12">कार्य</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rows-body" class="divide-y divide-slate-100">
+                        @php
+                            $existingDates = old('date') ?? ($bill ? $bill->date : [now()->format('Y-m-d')]);
+                            $existingQty   = old('quantity') ?? ($bill ? $bill->quantity : ['']);
+                            $existingRate  = old('rate') ?? ($bill ? $bill->rate : ['']);
+                            $existingAmt   = old('amount') ?? ($bill ? $bill->amount : ['']);
+                        @endphp
+                        @foreach($existingDates as $i => $d)
+                        <tr class="hover:bg-slate-50/50 transition">
+                            <td class="p-2 border-r border-slate-100">
+                                <input type="date" name="date[]" value="{{ $d }}" class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-emerald-500 focus:border-emerald-500 row-date" required>
+                            </td>
+                            <td class="p-2 border-r border-slate-100">
+                                <input type="number" step="0.01" name="quantity[]" value="{{ $existingQty[$i] ?? '' }}" placeholder="0.00" class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-emerald-500 focus:border-emerald-500 row-qty" required>
+                            </td>
+                            <td class="p-2 border-r border-slate-100">
+                                <input type="number" step="0.01" name="rate[]" value="{{ $existingRate[$i] ?? '' }}" placeholder="0.00" class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-emerald-500 focus:border-emerald-500 row-rate" required>
+                            </td>
+                            <td class="p-2 border-r border-slate-100">
+                                <input type="number" step="0.01" name="amount[]" value="{{ $existingAmt[$i] ?? '' }}" placeholder="0.00" class="w-full p-2 border border-slate-200 bg-slate-50 rounded-md text-xs font-semibold text-slate-700 row-amount" readonly required>
+                            </td>
+                            <td class="p-2 text-center">
+                                <button type="button" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition remove-row" title="हटाउनुहोस्">
+                                    <i class="fas fa-trash-alt text-sm"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-        <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition">
-            {{ $bill ? 'Update गर्नुहोस्' : 'Submit गर्नुहोस्' }}
-        </button>
-    </form>
+            <!-- Remarks -->
+            <div class="mb-6">
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">कैफियत (Remarks)</label>
+                <textarea name="remarks" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs focus:ring-emerald-500 focus:border-emerald-500" rows="2" placeholder="आवश्यकता अनुसार कैफियत लेख्नुहोस्...">{{ $bill->remarks ?? '' }}</textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" id="submit-btn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium p-3 rounded-lg text-sm shadow-sm transition flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i>
+                <span>{{ $bill ? 'Update गर्नुहोस्' : 'Submit गर्नुहोस्' }}</span>
+            </button>
+        </form>
+    </div>
 </div>
 
+<!-- TomSelect CSS & JS CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.2.2/css/tom-select.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tom-select/2.2.2/js/tom-select.complete.min.js"></script>
+
 <script>
-document.getElementById('add-row').addEventListener('click', function () {
-    const tbody = document.getElementById('rows-body');
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td class="border p-1"><input type="date" name="date[]" class="w-full p-1 border rounded row-date" required></td>
-        <td class="border p-1"><input type="number" step="0.01" name="quantity[]" class="w-full p-1 border rounded row-qty" required></td>
-        <td class="border p-1"><input type="number" step="0.01" name="rate[]" class="w-full p-1 border rounded row-rate" required></td>
-        <td class="border p-1"><input type="number" step="0.01" name="amount[]" class="w-full p-1 border rounded row-amount" required></td>
-        <td class="border p-1 text-center"><button type="button" class="text-red-600 font-bold remove-row">✕</button></td>
-    `;
-    tbody.appendChild(row);
-});
+document.addEventListener('DOMContentLoaded', function() {
 
-document.getElementById('rows-body').addEventListener('click', function (e) {
-    if (e.target.classList.contains('remove-row')) {
-        if (document.querySelectorAll('#rows-body tr').length > 1) {
-            e.target.closest('tr').remove();
-        }
+    // 1. Employee TomSelect Setup
+    let empTomInstance = null;
+    const empSelectElem = document.getElementById('employee_id');
+    if (empSelectElem) {
+        empTomInstance = new TomSelect('#employee_id', {
+            create: false,
+            placeholder: "-- कर्मचारी छान्नुहोस् --",
+            allowEmptyOption: true,
+            maxOptions: null,
+            sortField: { field: "text", direction: "asc" }
+        });
     }
-});
 
-// परिमाण x दर = रकम auto-calculate
-document.getElementById('rows-body').addEventListener('input', function (e) {
-    if (e.target.classList.contains('row-qty') || e.target.classList.contains('row-rate')) {
-        const row = e.target.closest('tr');
-        const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
-        const rate = parseFloat(row.querySelector('.row-rate').value) || 0;
-        row.querySelector('.row-amount').value = (qty * rate).toFixed(2);
+    // 2. Month TomSelect Setup (Forced Searchable)
+    const monthSelectElem = document.getElementById('petrol_month_id');
+    if (monthSelectElem) {
+        new TomSelect('#petrol_month_id', {
+            create: false,
+            placeholder: "-- महिना खोज्नुहोस् / छान्नुहोस् --",
+            allowEmptyOption: true,
+            maxOptions: null,
+            sortField: { field: "text", direction: "desc" }
+        });
     }
-});
 
-// Employee छान्नासाथ Vehicle No नभएको जाँच गर्ने (create फारममा मात्र लागू हुन्छ)
-const employeeSelect = document.getElementById('employee_id');
-if (employeeSelect) {
-    const vehicleWarning = document.getElementById('vehicle-warning');
-    const vehicleWarningLink = document.getElementById('vehicle-warning-link');
-    const submitBtn = document.querySelector('button[type="submit"]');
-    const isSelfEntry = {{ $canSelectAny ? 'false' : 'true' }};
-    const profileUrl = "{{ route('profile.edit') }}";
-    const employeesEditBaseUrl = "{{ url('/employees') }}";
+    // 3. Add Row Logic
+    const addBtn = document.getElementById('add-row');
+    if (addBtn) {
+        addBtn.addEventListener('click', function () {
+            const tbody = document.getElementById('rows-body');
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-slate-50/50 transition';
+            row.innerHTML = `
+                <td class="p-2 border-r border-slate-100">
+                    <input type="date" name="date[]" value="{{ now()->format('Y-m-d') }}" class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-emerald-500 focus:border-emerald-500 row-date" required>
+                </td>
+                <td class="p-2 border-r border-slate-100">
+                    <input type="number" step="0.01" name="quantity[]" placeholder="0.00" class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-emerald-500 focus:border-emerald-500 row-qty" required>
+                </td>
+                <td class="p-2 border-r border-slate-100">
+                    <input type="number" step="0.01" name="rate[]" placeholder="0.00" class="w-full p-2 border border-slate-300 rounded-md text-xs focus:ring-emerald-500 focus:border-emerald-500 row-rate" required>
+                </td>
+                <td class="p-2 border-r border-slate-100">
+                    <input type="number" step="0.01" name="amount[]" placeholder="0.00" class="w-full p-2 border border-slate-200 bg-slate-50 rounded-md text-xs font-semibold text-slate-700 row-amount" readonly required>
+                </td>
+                <td class="p-2 text-center">
+                    <button type="button" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition remove-row" title="हटाउनुहोस्">
+                        <i class="fas fa-trash-alt text-sm"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 
-    employeeSelect.addEventListener('change', function () {
-        const selected = this.options[this.selectedIndex];
-        const vehicleNo = selected ? selected.getAttribute('data-vehicle') : '';
-
-       if (this.value && !vehicleNo) {
-            vehicleWarning.classList.remove('hidden');
-            vehicleWarningLink.href = isSelfEntry ? profileUrl : (employeesEditBaseUrl + '/' + this.value + '/edit');
-            if (submitBtn) submitBtn.disabled = true;
-            if (submitBtn) submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-        } else {
-            vehicleWarning.classList.add('hidden');
-            if (submitBtn) submitBtn.disabled = false;
-            if (submitBtn) submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    // 4. Remove Row
+    document.getElementById('rows-body').addEventListener('click', function (e) {
+        const removeBtn = e.target.closest('.remove-row');
+        if (removeBtn) {
+            if (document.querySelectorAll('#rows-body tr').length > 1) {
+                removeBtn.closest('tr').remove();
+            }
         }
     });
-}
-</script>
 
+    // 5. Auto Calculation (Qty * Rate)
+    document.getElementById('rows-body').addEventListener('input', function (e) {
+        if (e.target.classList.contains('row-qty') || e.target.classList.contains('row-rate')) {
+            const row = e.target.closest('tr');
+            const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+            const rate = parseFloat(row.querySelector('.row-rate').value) || 0;
+            row.querySelector('.row-amount').value = (qty * rate).toFixed(2);
+        }
+    });
+
+    // 6. Vehicle Warning Check
+    if (empSelectElem) {
+        const vehicleWarning = document.getElementById('vehicle-warning');
+        const vehicleWarningLink = document.getElementById('vehicle-warning-link');
+        const submitBtn = document.getElementById('submit-btn');
+        const isSelfEntry = {{ $canSelectAny ? 'false' : 'true' }};
+        const profileUrl = "{{ route('profile.edit') }}";
+        const employeesEditBaseUrl = "{{ url('/employees') }}";
+
+        function checkVehicleStatus(val) {
+            if (!val) {
+                vehicleWarning.classList.add('hidden');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                return;
+            }
+
+            const opt = empSelectElem.querySelector(`option[value="${val}"]`);
+            const vehicleNo = opt ? opt.getAttribute('data-vehicle') : '';
+
+            if (!vehicleNo) {
+                vehicleWarning.classList.remove('hidden');
+                vehicleWarningLink.href = isSelfEntry ? profileUrl : (employeesEditBaseUrl + '/' + val + '/edit');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            } else {
+                vehicleWarning.classList.add('hidden');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        if (empTomInstance) {
+            empTomInstance.on('change', function(val) {
+                checkVehicleStatus(val);
+            });
+        }
+    }
+
+});
+</script>
 @endsection

@@ -25,9 +25,11 @@ class FinanceExport implements FromCollection, WithHeadings
 
         foreach ($this->data as $rec) {
             $hours = $rec->total_hours ?? 0;
+            
+            // यहाँ कर्मचारीको व्यक्तिगत ot_rate नभई सधैं Position (Level) मा भएको ot_rate मात्र लिने
             $rate  = $rec->employee->position->ot_rate ?? 0;
 
-       $eventDateRange = $rec->event
+            $eventDateRange = $rec->event
                 ? adToBs($rec->event->start_date) . ' - ' . adToBs($rec->event->end_date)
                 : '-';
 

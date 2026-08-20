@@ -9,80 +9,82 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    // युजर बनाउने फर्म देखाउन
     public function create()
     {
-        // कर्मचारीहरूको सूची तान्नुहोस् जो अहिले युजर बनिसकेका छैनन्
-        $employees = \App\Models\Employee::all();
+        $employees = Employee::all();
         return view('users.create', compact('employees'));
     }
 
-    // युजर सेभ गर्न
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'role' => 'required',
+            'name'        => 'required|string|max:255',
+            'email'       => 'required|email|unique:users,email',
+            'password'    => 'required|min:6',
+            'role'        => 'required|string',
+            'employee_id' => 'nullable|exists:employees,id',
         ]);
 
         User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-            'employee_id' => $request->employee_id, // कर्मचारी छान्नुभयो भने ID जान्छ, नत्र NULL जान्छ
+            'name'        => $request->name,
+            'email'       => $request->email,
+            'password'    => Hash::make($request->password), // यहाँ म्यानुअल ह्यास गर्ने
+            'role'        => $request->role,
+            'employee_id' => $request->employee_id,
         ]);
 
         return redirect()->route('users.index')->with('success', 'प्रयोगकर्ता सफलतापूर्वक सिर्जना गरियो!');
     }
-public function index()
-{
-    $users = \App\Models\User::all();
-    return view('users.index', compact('users'));
-}
 
-public function destroy($id)
-{
-    User::findOrFail($id)->delete();
-    return back()->with('success', 'युजर हटाइयो!');
-}
-// युजरको जानकारी एडिट गर्न (फर्म देखाउन)
-public function edit($id)
-{
-    $user = User::findOrFail($id);
-    $employees = Employee::all(); // ड्रपडाउनमा कर्मचारी देखाउन
-    return view('users.edit', compact('user', 'employees'));
-}
+    public function index()
+    {
+        $users = User::with('employee')->get();
+        return view('users.index', compact('users'));
+    }
 
-public function update(Request $request, $id)
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'तपाईं आफ्नो चालु अकाउन्ट मेटाउन सक्नुहुन्न!');
+        }
+
+        $user->delete();
+        return back()->with('success', 'युजर हटाइयो!');
+    }
+
+    public function edit($id)
+    {
+        $user = User::findOrFail($id);
+        $employees = Employee::all(); 
+        return view('users.edit', compact('user', 'employees'));
+    }
+
+    public function update(Request $request, $id)
 {
     $user = User::findOrFail($id);
     
     $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $user->id,
-        'role' => 'required',
-        'password' => 'nullable|min:6', // पासवर्ड अनिवार्य छैन, तर भएमा कम्तिमा ६ अक्षरको हुनुपर्छ
+        'name'        => 'required|string|max:255',
+        'email'       => 'required|email|unique:users,email,' . $user->id,
+        'role'        => 'required|string',
+        'employee_id' => 'nullable|exists:employees,id',
+        'password'    => 'nullable|min:6', // खाली छोड्दा भ्यालिडेशन पास हुन्छ
     ]);
 
-    // डेटा अपडेट गर्ने
-    $userData = [
-        'name' => $request->name,
-        'email' => $request->email,
-        'role' => $request->role,
-        'employee_id' => $request->employee_id,
-    ];
+    $user->name = $request->name;
+    $user->email = $request->email;
+    $user->role = $request->role;
+    $user->employee_id = $request->employee_id;
 
-    // यदि पासवर्ड हालिएको छ भने मात्र अपडेट गर्ने
+    // यदि एडमिनले नयाँ पासवर्ड लेखेको छ भने मात्र पासवर्ड परिवर्तन गर्ने
     if ($request->filled('password')) {
-        $userData['password'] = Hash::make($request->password);
+        $user->password = Hash::make($request->password);
     }
 
-    $user->update($userData);
+    $user->save();
 
     return redirect()->route('users.index')->with('success', 'प्रयोगकर्ताको विवरण सफलतापूर्वक अपडेट भयो!');
 }
-
-}
+    }

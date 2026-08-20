@@ -7,12 +7,13 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Position;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class HrSyncService
 {
-    protected $provisioningService;
+    protected UserProvisioningService $provisioningService;
 
-    protected $summary = [
+    protected array $summary = [
         'departments_synced' => 0,
         'positions_synced'   => 0,
         'employees_created'  => 0,
@@ -28,30 +29,47 @@ class HrSyncService
 
     public function runFullSync(): array
     {
-        // $this->syncDepartments();
-        // $this->syncPositions();
+        $this->syncDepartments();
+        $this->syncPositions();
         $this->syncEmployees();
 
         return $this->summary;
+    }
+
+    // हाइरार्की कन्भर्ट गर्ने नियम (Logic)
+    protected function mapHierarchy($hierarchy): int
+    {
+        $hierarchy = (int) $hierarchy;
+
+        $map = [
+            1  => 12,
+            2  => 11,
+            3  => 10,
+            4  => 9,
+            5  => 8,
+            6  => 7,
+            7  => 6,
+            8  => 5,
+            9  => 4,
+            10 => 3,
+        ];
+
+        return $map[$hierarchy] ?? 1; // अन्य (Other) भएमा 1
     }
 
     protected function syncDepartments(): void
     {
         try {
             $list = HrController::getDepartmentList();
-        //    dd($list);
-
             foreach ($list->data ?? [] as $dept) {
-                // Note: API ko actual field naam confirm huनुparcha (haal 'name' assume gareko)
-                $name = $dept->name ?? $dept->departmentName ?? null;
+                $name = $dept->departmentName ?? null;
                 if (!$name) continue;
 
                 Department::firstOrCreate(['name' => trim($name)]);
                 $this->summary['departments_synced']++;
             }
         } catch (\Exception $e) {
-            $this->summary['errors'][] = 'Department sync error: ' . $e->getMessage();
-            Log::error('HR Sync - Department error: ' . $e->getMessage());
+            $this->logError('Department sync error: ' . $e->getMessage());
         }
     }
 
@@ -59,21 +77,33 @@ class HrSyncService
     {
         try {
             $list = HrController::getDesignationList();
-            //  dd($list);
+           
             foreach ($list->data ?? [] as $designation) {
-                // Note: API ko actual field naam confirm huनुparcha (haal 'name' assume gareko)
-                $name = $designation->name ?? $designation->designation_name ?? null;
+                $name = $designation->name ?? null;
                 if (!$name) continue;
 
-                Position::firstOrCreate(
+                // API बाट आएको hierarchy लाई म्याप गर्ने
+                $rawHierarchy = $designation->hierarchy ?? 0;
+                $mappedHierarchy = $this->mapHierarchy($rawHierarchy);
+
+                // पद सिर्जना गर्ने
+                $position = Position::firstOrCreate(
                     ['name' => trim($name)],
-                    ['ot_rate' => 0, 'level' => 0, 'is_active' => true]
+                    [
+                        'ot_rate'   => 0,
+                        'is_active' => true
+                    ]
                 );
+
+                // म्याप गरिएको level अपडेट गर्ने
+                $position->update([
+                    'level' => $mappedHierarchy
+                ]);
+
                 $this->summary['positions_synced']++;
             }
         } catch (\Exception $e) {
-            $this->summary['errors'][] = 'Position sync error: ' . $e->getMessage();
-            Log::error('HR Sync - Position error: ' . $e->getMessage());
+            $this->logError('Position sync error: ' . $e->getMessage());
         }
     }
 
@@ -81,80 +111,128 @@ class HrSyncService
     {
         try {
             $list = HrController::getEmployeeList();
-            //  dump($list);
-            dd($list);
+           
             foreach ($list->data ?? [] as $emp) {
                 try {
                     $this->syncOneEmployee($emp);
                 } catch (\Exception $e) {
-                    $this->summary['errors'][] = 'Employee (' . ($emp->employee_code ?? 'unknown') . ') error: ' . $e->getMessage();
-                    Log::error('HR Sync - Employee error: ' . $e->getMessage());
+                    $empCode = $emp->employeeCode ?? 'unknown';
+                    $this->logError("Employee ({$empCode}) error: " . $e->getMessage());
                 }
             }
         } catch (\Exception $e) {
-            $this->summary['errors'][] = 'Employee list fetch error: ' . $e->getMessage();
-            Log::error('HR Sync - Employee list error: ' . $e->getMessage());
+            $this->logError('Employee list fetch error: ' . $e->getMessage());
         }
     }
 
-    protected function syncOneEmployee($emp): void
+    protected function syncOneEmployee(object|array $emp): void
     {
-        // Note: API ko actual field naam sabai confirm huनुparcha, haal reasonable assume gareko
-        $status = $emp->status ?? 1;
-        if ((int) $status !== 1) {
-            return; // Active bahekaलाई skip
+        $emp = (object) $emp;
+
+        if (!($emp->active ?? false)) {
+            return;
         }
 
-        $employeeCode = trim($emp->employee_code ?? $emp->emp_code ?? '');
+        $employeeCode = trim($emp->employeeCode ?? '');
         if (empty($employeeCode)) {
             return;
         }
 
-        $name       = $emp->name ?? $emp->full_name ?? null;
-        $email      = $emp->email ?? null;
-        $mobile     = $emp->mobile ?? $emp->phone ?? null;
-        $deptName   = $emp->department ?? $emp->department_name ?? null;
-        $posName    = $emp->designation ?? $emp->position ?? $emp->designation_name ?? null;
+        // Sanitization
+        $rawEmail    = trim($emp->email ?? '');
+        $rawDeptName = trim($emp->department ?? '');
 
-        $departmentId = $deptName ? Department::firstOrCreate(['name' => trim($deptName)])->id : null;
-        $positionId   = $posName ? Position::firstOrCreate(
-                            ['name' => trim($posName)],
-                            ['ot_rate' => 0, 'level' => 0, 'is_active' => true]
-                        )->id : null;
+        $name        = trim($emp->name ?? '') ?: 'N/A';
+        $mobile      = $emp->mobile ?? null;
+        $designation = $emp->designation ?? null;
+        
+        // कर्मचारीको हकमा पनि hierarchy म्याप गर्ने
+        $rawHierarchy = $emp->hierarchy ?? 1;
+        $hierarchy    = $this->mapHierarchy($rawHierarchy);
+        
+        $externalId  = $emp->id ?? null;
 
-        $existing = Employee::where('employee_code', $employeeCode)->first();
+        $email = !empty($rawEmail) ? $rawEmail : null;
+        $deptName = !empty($rawDeptName) ? $rawDeptName : 'Unassigned';
 
-        if ($existing) {
-            // Existing bhaye: naam BAHEK, baaki sabai update
-            $existing->update([
-                'email'         => $email ?? $existing->email,
-                'mobile'        => $mobile ?? $existing->mobile,
-                'department'    => $deptName ?? $existing->department,
-                'position_id'   => $positionId ?? $existing->position_id,
-                'is_active'     => true,
-                'last_synced_at'=> now(),
+        // Department Sync
+        Department::firstOrCreate(['name' => $deptName]);
+        
+        // Position & Level Sync
+        $positionId = null;
+        if ($designation) {
+            $position = Position::firstOrCreate(
+                ['name' => trim($designation)],
+                [
+                    'ot_rate'   => 0,
+                    'is_active' => true
+                ]
+            );
+
+            $position->update([
+                'level' => $hierarchy
             ]);
+
+            $positionId = $position->id;
+        }
+
+        $employeeData = [
+            'external_staff_id'    => $externalId,
+            'email'                => $email,
+            'mobile'               => $mobile,
+            'designation'          => $designation,
+            'department'           => $deptName,
+            'position_id'          => $positionId,
+            'hierarchy'            => $hierarchy, // म्याप गरिएको सही हाइरार्की
+            'is_active'            => true,
+            'last_synced_at'       => now(),
+            'repair_expense_limit' => 8000, 
+            'petrol_quantity_limit'=> 25,  
+        ];
+
+        $employee = Employee::where('employee_code', $employeeCode)
+            ->when($email, function ($query) use ($email) {
+                $query->orWhere('email', $email);
+            })
+            ->first();
+
+        if ($employee) {
+            $employee->update(array_merge($employeeData, ['employee_code' => $employeeCode]));
             $this->summary['employees_updated']++;
-            $employee = $existing;
         } else {
-            // Navaya employee create
-            $employee = Employee::create([
-                'employee_code'  => $employeeCode,
-                'name'           => $name,
-                'email'          => $email,
-                'mobile'         => $mobile,
-                'department'     => $deptName,
-                'position_id'    => $positionId,
-                'is_active'      => true,
-                'last_synced_at' => now(),
-            ]);
+            $employee = Employee::create(array_merge($employeeData, [
+                'employee_code' => $employeeCode,
+                'name'          => $name,
+            ]));
             $this->summary['employees_created']++;
         }
 
-        // User auto-provision (existing bhaye skip हुन्छ, provisionFor() भित्रै त्यो check छ)
-        $user = $this->provisioningService->provisionFor($employee);
-        if ($user && $user->wasRecentlyCreated) {
-            $this->summary['users_created']++;
+        try {
+            $user = $this->provisioningService->provisionFor($employee);
+            if ($user && $user->wasRecentlyCreated) {
+                $this->summary['users_created']++;
+            }
+
+            if ($user) {
+                if (Schema::hasColumn('employees', 'user_id') && $employee->user_id !== $user->id) {
+                    $employee->user_id = $user->id;
+                    $employee->save();
+                }
+
+                if (Schema::hasColumn('users', 'employee_id') && $user->employee_id !== $employee->id) {
+                    $user->employee_id = $employee->id;
+                    $user->save();
+                }
+            }
+
+        } catch (\Exception $e) {
+            $this->logError("User provisioning/mail failed for ({$employeeCode}): " . $e->getMessage());
         }
+    }
+
+    protected function logError(string $message): void
+    {
+        $this->summary['errors'][] = $message;
+        Log::error("HR Sync - {$message}");
     }
 }

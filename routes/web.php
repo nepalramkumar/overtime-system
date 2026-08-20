@@ -105,7 +105,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/events/{id}/toggle', [EventController::class, 'toggleActive'])->middleware('role:events.manage')->name('events.toggle');
     Route::get('/events/{id}/print', [OvertimeController::class, 'printEventSlip'])->middleware('role:overtime.entry')->name('events.print');
     Route::get('/events/{id}/edit', [EventController::class, 'edit'])->middleware('role:events.manage')->name('events.edit');
-Route::put('/events/{id}', [EventController::class, 'update'])->middleware('role:events.manage')->name('events.update');
+    Route::put('/events/{id}', [EventController::class, 'update'])->middleware('role:events.manage')->name('events.update');
 
     // ------------------------------------------
     // User Management Routes
@@ -150,7 +150,7 @@ Route::put('/events/{id}', [EventController::class, 'update'])->middleware('role
     // ------------------------------------------
     Route::get('/petrol/bills', [PetrolBillController::class, 'index'])->middleware('role:petrol.bills.view')->name('petrol.bills.index');
     Route::get('/petrol/bills/create', [PetrolBillController::class, 'create'])->middleware('role:petrol.bills.entry,petrol.bills.manage')->name('petrol.bills.create');
-Route::post('/petrol/bills', [PetrolBillController::class, 'store'])->middleware('role:petrol.bills.entry,petrol.bills.manage')->name('petrol.bills.store');
+    Route::post('/petrol/bills', [PetrolBillController::class, 'store'])->middleware('role:petrol.bills.entry,petrol.bills.manage')->name('petrol.bills.store');
     Route::get('/petrol/bills/{id}/edit', [PetrolBillController::class, 'edit'])->middleware('role:petrol.bills.view')->name('petrol.bills.edit');
     Route::put('/petrol/bills/{id}', [PetrolBillController::class, 'update'])->middleware('role:petrol.bills.view')->name('petrol.bills.update');
     Route::delete('/petrol/bills/{id}', [PetrolBillController::class, 'destroy'])->middleware('role:petrol.bills.manage')->name('petrol.bills.destroy');
@@ -161,18 +161,21 @@ Route::post('/petrol/bills', [PetrolBillController::class, 'store'])->middleware
     // Repair Expense Routes
     // ------------------------------------------
     Route::get('/repair/expenses', [RepairExpenseController::class, 'index'])->middleware('role:repair.expenses.view')->name('repair.expenses.index');
-   Route::get('/repair/expenses/create', [RepairExpenseController::class, 'create'])->middleware('role:repair.expenses.entry,repair.expenses.manage')->name('repair.expenses.create');
-Route::post('/repair/expenses', [RepairExpenseController::class, 'store'])->middleware('role:repair.expenses.entry,repair.expenses.manage')->name('repair.expenses.store');
+    Route::get('/repair/expenses/create', [RepairExpenseController::class, 'create'])->middleware('role:repair.expenses.entry,repair.expenses.manage')->name('repair.expenses.create');
+    Route::post('/repair/expenses', [RepairExpenseController::class, 'store'])->middleware('role:repair.expenses.entry,repair.expenses.manage')->name('repair.expenses.store');
     Route::get('/repair/expenses/{id}/edit', [RepairExpenseController::class, 'edit'])->middleware('role:repair.expenses.view')->name('repair.expenses.edit');
     Route::put('/repair/expenses/{id}', [RepairExpenseController::class, 'update'])->middleware('role:repair.expenses.view')->name('repair.expenses.update');
     Route::delete('/repair/expenses/{id}', [RepairExpenseController::class, 'destroy'])->middleware('role:repair.expenses.manage')->name('repair.expenses.destroy');
     Route::post('/repair/expenses/{id}/toggle-edit', [RepairExpenseController::class, 'toggleEditPermission'])->middleware('role:repair.expenses.manage')->name('repair.expenses.toggleEdit');
-Route::get('/repair/expenses/{id}/print', [RepairExpenseController::class, 'printExpense'])->middleware('role:repair.expenses.view')->name('repair.expenses.print');
+    Route::get('/repair/expenses/{id}/print', [RepairExpenseController::class, 'printExpense'])->middleware('role:repair.expenses.view')->name('repair.expenses.print');
+
     // ------------------------------------------
-    // आफ्नो Vehicle No अपडेट गर्ने (Profile पेजबाट, जोसुकै logged-in employee ले आफ्नै मात्र)
+    // आफ्नो Vehicle No अपडेट गर्ने (Profile पेजबाट)
     // ------------------------------------------
     Route::patch('/profile/vehicle', [EmployeeController::class, 'updateOwnVehicle'])->name('profile.vehicle.update');
     Route::get('/hr-sync', [HrSyncController::class, 'index'])->middleware('role:hr.sync')->name('hr-sync.index');
-Route::post('/hr-sync/run', [HrSyncController::class, 'run'])->middleware('role:hr.sync')->name('hr-sync.run');
-
+    Route::post('/hr-sync/run', [HrSyncController::class, 'run'])->middleware('role:hr.sync')->name('hr-sync.run');
+Route::middleware(['role:petrol.bills.entry,petrol.bills.manage'])->group(function () {
+    // petrol routes...
+});
 });
