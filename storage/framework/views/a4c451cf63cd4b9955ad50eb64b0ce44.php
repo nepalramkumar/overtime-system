@@ -1,20 +1,20 @@
-@extends('layouts.app')
 
-@section('content')
-    @php
+
+<?php $__env->startSection('content'); ?>
+    <?php
         $dayOptions = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    @endphp
+    ?>
     <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
         <h1 class="text-2xl font-bold mb-6">कार्यालय सिफ्ट सेटिङ्स</h1>
 
         <!-- Add Shift Form -->
-        <form action="{{ route('shifts.store') }}" method="POST" class="flex gap-2 mb-6 bg-blue-50 p-4 rounded">
-            @csrf
+        <form action="<?php echo e(route('shifts.store')); ?>" method="POST" class="flex gap-2 mb-6 bg-blue-50 p-4 rounded">
+            <?php echo csrf_field(); ?>
             <select name="day_name" class="border p-2 w-full rounded" required>
                 <option value="">-- दिन छान्नुहोस् --</option>
-                @foreach($dayOptions as $day)
-                    <option value="{{ $day }}">{{ $day }}</option>
-                @endforeach
+                <?php $__currentLoopData = $dayOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $day): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($day); ?>"><?php echo e($day); ?></option>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </select>
             <input type="time" name="start_time" class="border p-2 rounded" required>
             <input type="time" name="end_time" class="border p-2 rounded" required>
@@ -37,41 +37,41 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($shifts as $shift)
+                <?php $__currentLoopData = $shifts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shift): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr class="shift-row">
                     <td colspan="4" class="border p-0">
                         <div class="grid grid-cols-4 gap-2 p-2 items-center">
                             <!-- Update Form -->
-                            <form action="{{ route('shifts.update', $shift->id) }}" method="POST" class="contents">
-                                @csrf 
-                                @method('PUT')
+                            <form action="<?php echo e(route('shifts.update', $shift->id)); ?>" method="POST" class="contents">
+                                <?php echo csrf_field(); ?> 
+                                <?php echo method_field('PUT'); ?>
                                 <div>
                                     <select name="day_name" class="w-full p-1 border rounded shift-day" required>
-                                        @foreach($dayOptions as $day)
-                                            <option value="{{ $day }}" {{ $shift->day_name === $day ? 'selected' : '' }}>{{ $day }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $dayOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $day): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($day); ?>" <?php echo e($shift->day_name === $day ? 'selected' : ''); ?>><?php echo e($day); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                                 <div>
-                                    <input type="time" name="start_time" value="{{ date('H:i', strtotime($shift->start_time)) }}" class="w-full p-1 border rounded">
+                                    <input type="time" name="start_time" value="<?php echo e(date('H:i', strtotime($shift->start_time))); ?>" class="w-full p-1 border rounded">
                                 </div>
                                 <div>
-                                    <input type="time" name="end_time" value="{{ date('H:i', strtotime($shift->end_time)) }}" class="w-full p-1 border rounded">
+                                    <input type="time" name="end_time" value="<?php echo e(date('H:i', strtotime($shift->end_time))); ?>" class="w-full p-1 border rounded">
                                 </div>
                                 <div class="flex gap-2">
                                     <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Save</button>
                             </form>
                                     <!-- Delete Form -->
-                                    <form action="{{ route('shifts.destroy', $shift->id) }}" method="POST" onsubmit="return confirm('पक्का हो?')" class="inline">
-                                        @csrf 
-                                        @method('DELETE')
+                                    <form action="<?php echo e(route('shifts.destroy', $shift->id)); ?>" method="POST" onsubmit="return confirm('पक्का हो?')" class="inline">
+                                        <?php echo csrf_field(); ?> 
+                                        <?php echo method_field('DELETE'); ?>
                                         <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700">Delete</button>
                                     </form>
                                 </div>
                         </div>
                     </td>
                 </tr>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </tbody>
         </table>
     </div>
@@ -87,4 +87,5 @@
         });
     });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/settings/shift.blade.php ENDPATH**/ ?>

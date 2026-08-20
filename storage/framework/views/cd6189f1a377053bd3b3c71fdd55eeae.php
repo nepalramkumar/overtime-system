@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="max-w-4xl mx-auto space-y-6">
 
     <!-- Header Section -->
@@ -12,19 +10,19 @@
     </div>
 
     <!-- Flash Messages -->
-    @if(session('success'))
+    <?php if(session('success')): ?>
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3.5 rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm">
             <i class="fas fa-check-circle text-emerald-600 text-base"></i>
-            <span>{{ session('success') }}</span>
+            <span><?php echo e(session('success')); ?></span>
         </div>
-    @endif
+    <?php endif; ?>
 
-    @if(session('error'))
+    <?php if(session('error')): ?>
         <div class="bg-rose-50 border border-rose-200 text-rose-800 p-3.5 rounded-xl text-xs font-medium flex items-center gap-2 shadow-sm">
             <i class="fas fa-exclamation-circle text-rose-600 text-base"></i>
-            <span>{{ session('error') }}</span>
+            <span><?php echo e(session('error')); ?></span>
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Months List Table -->
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -42,33 +40,34 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    @forelse($months as $item)
+                    <?php $__empty_1 = true; $__currentLoopData = $months; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr class="hover:bg-slate-50/80 transition">
-                        <td class="p-4 font-semibold text-slate-800">{{ $item->month }}</td>
-                        <td class="p-4 font-mono text-xs text-slate-600">{{ $item->year }}</td>
+                        <td class="p-4 font-semibold text-slate-800"><?php echo e($item->month); ?></td>
+                        <td class="p-4 font-mono text-xs text-slate-600"><?php echo e($item->year); ?></td>
                         <td class="p-4 text-center">
-                            @if($item->status)
+                            <?php if($item->status): ?>
                                 <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full text-xs font-semibold">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Enabled
                                 </span>
-                            @else
+                            <?php else: ?>
                                 <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-full text-xs font-semibold">
                                     <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Disabled
                                 </span>
-                            @endif
+                            <?php endif; ?>
                         </td>
                         <td class="p-4 text-center">
                             <div class="flex items-center justify-center gap-2">
-                                <form action="{{ route('petrol.months.toggleStatus', $item->id) }}" method="POST" class="inline">
-                                    @csrf
+                                <form action="<?php echo e(route('petrol.months.toggleStatus', $item->id)); ?>" method="POST" class="inline">
+                                    <?php echo csrf_field(); ?>
                                     <button type="submit" 
-                                            class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition shadow-2xs {{ $item->status ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700' }}">
-                                        {{ $item->status ? 'Disable' : 'Enable' }}
+                                            class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition shadow-2xs <?php echo e($item->status ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'); ?>">
+                                        <?php echo e($item->status ? 'Disable' : 'Enable'); ?>
+
                                     </button>
                                 </form>
-                                <form action="{{ route('petrol.months.destroy', $item->id) }}" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
-                                    @csrf
-                                    @method('DELETE')
+                                <form action="<?php echo e(route('petrol.months.destroy', $item->id)); ?>" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('DELETE'); ?>
                                     <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-2xs">
                                         Delete
                                     </button>
@@ -76,14 +75,14 @@
                             </div>
                         </td>
                     </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="4" class="p-8 text-center text-slate-400">
                             <i class="fas fa-calendar-times text-2xl mb-2 block text-slate-300"></i>
                             कुनै Month थपिएको छैन।
                         </td>
                     </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -96,15 +95,15 @@
             <span>नयाँ Month थप्नुहोस्</span>
         </h3>
 
-        <form action="{{ route('petrol.months.store') }}" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-            @csrf
+        <form action="<?php echo e(route('petrol.months.store')); ?>" method="POST" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <?php echo csrf_field(); ?>
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">महिना छान्नुहोस् <span class="text-rose-500">*</span></label>
                 <select name="month" id="select_month" class="w-full text-xs" required>
                     <option value="">-- महिना छान्नुहोस् --</option>
-                    @foreach($bsMonths as $m)
-                        <option value="{{ $m }}" {{ old('month') == $m ? 'selected' : '' }}>{{ $m }}</option>
-                    @endforeach
+                    <?php $__currentLoopData = $bsMonths; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($m); ?>" <?php echo e(old('month') == $m ? 'selected' : ''); ?>><?php echo e($m); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
 
@@ -112,9 +111,9 @@
                 <label class="block text-xs font-semibold text-slate-600 mb-1">वर्ष छान्नुहोस् <span class="text-rose-500">*</span></label>
                 <select name="year" id="select_year" class="w-full text-xs" required>
                     <option value="">-- वर्ष छान्नुहोस् --</option>
-                    @foreach($yearOptions as $y)
-                        <option value="{{ $y }}" {{ old('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                    @endforeach
+                    <?php $__currentLoopData = $yearOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $y): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($y); ?>" <?php echo e(old('year') == $y ? 'selected' : ''); ?>><?php echo e($y); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
 
@@ -148,4 +147,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/petrol/months.blade.php ENDPATH**/ ?>

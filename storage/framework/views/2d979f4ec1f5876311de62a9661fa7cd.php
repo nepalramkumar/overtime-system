@@ -124,47 +124,67 @@
                         </ul>
                     </div>
 
-                    <!-- Petrol Section -->
-                    <?php if(userCan('petrol.bills.view') || userCan('petrol.months.manage') || userCan('repair.expenses.view')): ?>
-                    <div x-data="{ open: <?php echo e(request()->routeIs('petrol.*') || request()->routeIs('repair.*') ? 'true' : 'false'); ?> }">
-                        <button @click="open = !open" class="w-full flex items-center justify-between px-3 mb-2 text-xs uppercase text-slate-400 font-semibold tracking-wider hover:text-amber-400 transition">
-                            <span>Petrol & Repairs</span>
-                            <i class="fas fa-chevron-down text-[10px] transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
-                        </button>
-                        <ul class="space-y-1 pl-2 border-l-2 border-slate-700" x-show="open" x-transition x-cloak>
-                            <?php if(userCan('petrol.bills.view')): ?>
-                            <li>
-                                <a href="<?php echo e(route('petrol.bills.index')); ?>"
-                                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition duration-150 text-sm font-medium
-                                   <?php echo e(request()->routeIs('petrol.bills.*') ? 'bg-amber-700 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-700/70 hover:text-white'); ?>">
-                                    <i class="fas fa-gas-pump w-4 text-center"></i>
-                                    <span>Petrol Bills</span>
-                                </a>
-                            </li>
-                            <?php endif; ?>
-                            <?php if(userCan('petrol.months.manage')): ?>
-                            <li>
-                                <a href="<?php echo e(route('petrol.months.index')); ?>"
-                                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition duration-150 text-sm font-medium
-                                   <?php echo e(request()->routeIs('petrol.months.*') ? 'bg-amber-700 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-700/70 hover:text-white'); ?>">
-                                    <i class="fas fa-calendar-alt w-4 text-center"></i>
-                                    <span>Petrol Months</span>
-                                </a>
-                            </li>
-                            <?php endif; ?>
-                            <?php if(userCan('repair.expenses.view')): ?>
-                            <li>
-                                <a href="<?php echo e(route('repair.expenses.index')); ?>"
-                                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition duration-150 text-sm font-medium
-                                   <?php echo e(request()->routeIs('repair.expenses.*') ? 'bg-amber-700 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-700/70 hover:text-white'); ?>">
-                                    <i class="fas fa-wrench w-4 text-center"></i>
-                                    <span>Repair Expenses</span>
-                                </a>
-                            </li>
-                            <?php endif; ?>
-                        </ul>
-                    </div>
-                    <?php endif; ?>
+      <!-- Petrol -->
+<?php if(userCan('petrol.bills.view') || userCan('petrol.bills.entry') || userCan('petrol.bills.manage') || userCan('petrol.months.manage') || userCan('repair.expenses.view') || userCan('repair.expenses.entry') || userCan('repair.expenses.manage')): ?>
+<div class="mb-5" x-data="{ open: true }">
+    <button @click="open = !open" class="w-full flex items-center justify-between px-3 mb-2 text-xs uppercase text-gray-400 font-semibold tracking-wider">
+        <span>Petrol / Repair</span>
+        <i class="fas fa-chevron-down text-[10px] transition-transform" :class="{ 'rotate-180': !open }"></i>
+    </button>
+    <ul class="space-y-1" x-show="open" x-transition>
+        <?php if(userCan('petrol.bills.entry') || userCan('petrol.bills.manage')): ?>
+        <li>
+            <a href="<?php echo e(route('petrol.bills.create')); ?>"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150 text-sm font-medium
+               <?php echo e(request()->routeIs('petrol.bills.create') ? 'bg-orange-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'); ?>">
+                <i class="fas fa-plus w-5 text-center"></i>
+                <span>Petrol Bill Entry</span>
+            </a>
+        </li>
+        <?php endif; ?>
+        <?php if(userCan('petrol.bills.view')): ?>
+        <li>
+            <a href="<?php echo e(route('petrol.bills.index')); ?>"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150 text-sm font-medium
+               <?php echo e(request()->routeIs('petrol.bills.index') ? 'bg-orange-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'); ?>">
+                <i class="fas fa-gas-pump w-5 text-center"></i>
+                <span>Petrol Bills</span>
+            </a>
+        </li>
+        <?php endif; ?>
+        <?php if(userCan('petrol.months.manage')): ?>
+        <li>
+            <a href="<?php echo e(route('petrol.months.index')); ?>"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150 text-sm font-medium
+               <?php echo e(request()->routeIs('petrol.months.*') ? 'bg-orange-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'); ?>">
+                <i class="fas fa-calendar-alt w-5 text-center"></i>
+                <span>Petrol Months</span>
+            </a>
+        </li>
+        <?php endif; ?>
+        <?php if(userCan('repair.expenses.entry') || userCan('repair.expenses.manage')): ?>
+        <li>
+            <a href="<?php echo e(route('repair.expenses.create')); ?>"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150 text-sm font-medium
+               <?php echo e(request()->routeIs('repair.expenses.create') ? 'bg-orange-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'); ?>">
+                <i class="fas fa-plus w-5 text-center"></i>
+                <span>Repair Expense Entry</span>
+            </a>
+        </li>
+        <?php endif; ?>
+        <?php if(userCan('repair.expenses.view')): ?>
+        <li>
+            <a href="<?php echo e(route('repair.expenses.index')); ?>"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition duration-150 text-sm font-medium
+               <?php echo e(request()->routeIs('repair.expenses.index') ? 'bg-orange-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white'); ?>">
+                <i class="fas fa-wrench w-5 text-center"></i>
+                <span>Repair Expenses</span>
+            </a>
+        </li>
+        <?php endif; ?>
+    </ul>
+</div>
+<?php endif; ?>
 
                     <!-- Staff / HR Section -->
                     <?php if(userCan('employees.manage') || userCan('positions.manage') || userCan('events.manage') || userCan('users.manage') || userCan('settings.manage') || userCan('hr.sync')): ?>

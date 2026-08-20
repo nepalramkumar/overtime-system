@@ -1,209 +1,230 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="max-w-7xl mx-auto space-y-6">
 
-<!-- Filter Section -->
-<form action="{{ route('reports.index') }}" method="GET" class="bg-white border border-gray-200 rounded-lg p-3 mb-4 shadow-sm">
-    <div class="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
-        <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">रिपोर्ट प्रकार</label>
-            <select name="group_by" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
-                <option value="employee" {{ request('group_by') == 'employee' ? 'selected' : '' }}>कर्मचारी अनुसार</option>
-                <option value="event" {{ request('group_by') == 'event' ? 'selected' : '' }}>कार्यक्रम अनुसार</option>
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">From Date</label>
-            <input type="date" name="from_date" value="{{ request('from_date') }}" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
-        </div>
-        <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">To Date</label>
-            <input type="date" name="to_date" value="{{ request('to_date') }}" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
-        </div>
-        <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">कर्मचारी</label>
-            <select name="employee_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
-                <option value="">सबै</option>
-                @foreach(\App\Models\Employee::all() as $emp)
-                    <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">कार्यक्रम</label>
-            <select name="event_id" class="w-full border border-gray-300 rounded-md px-2 py-2 text-sm">
-                <option value="">सबै छान्नुहोस्</option>
-                @foreach(\App\Models\Event::orderBy('id', 'desc')->get() as $event)
-                    <option value="{{ $event->id }}" {{ request('event_id') == $event->id ? 'selected' : '' }}>{{ $event->event_name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="flex gap-2 items-end">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded">🔍 खोज</button>
-            <a href="{{ route('reports.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded">Reset</a>
-        </div>
-    </div>
-</form>
-
-<!-- View Toggle -->
-<div class="mb-4 flex gap-2">
-    <button type="button" id="btn-normal-view" onclick="showView('normal')"
-        class="bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold">📄 सामान्य View</button>
-    <button type="button" id="btn-pivot-view" onclick="showView('pivot')"
-        class="bg-gray-300 text-gray-700 px-4 py-2 rounded text-sm font-semibold">📊 Pivot View</button>
-</div>
-
-<!-- ============================== -->
-<!-- सामान्य (Normal) Table View -->
-<!-- ============================== -->
-<div id="normal-view">
-    <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
-        <table class="w-full border-collapse">
-            <thead>
-            <tr class="bg-blue-700 text-white text-sm">
-                <th class="p-3 border">सि.नं.</th>
-                <th class="p-3 border">मिति</th>
-                <th class="p-3 border">कर्मचारी कोड</th>
-                <th class="p-3 border">कर्मचारी</th>
-                <th class="p-3 border">पद</th>
-                <th class="p-3 border">कार्यक्रम / कारण</th>
-                <th class="p-3 border">समय (From-To)</th>
-                <th class="p-3 border">घण्टा (HH:MM)</th>
-                <th class="p-3 border">घण्टा (Decimal)</th>
-                <th class="p-3 border">खाजा</th>
-            </tr>
-            </thead>
-            <tbody>
-            @php $sn = 1; @endphp
-            @forelse($groupedData as $empGroup)
-                @foreach($empGroup['events'] as $eventGroup)
-                    @foreach($eventGroup['records'] as $rec)
-                    <tr>
-                        <td class="p-3 border text-center">{{ $sn++ }}</td>
-                        <td class="p-3 border">{{ $rec->ot_date }}</td>
-                        <td class="p-3 border">{{ $empGroup['employee']->employee_code ?? '-' }}</td>
-                        <td class="p-3 border">{{ $empGroup['employee']->name ?? 'N/A' }}</td>
-                        <td class="p-3 border">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
-                        <td class="p-3 border">
-                            {{ $rec->event->event_name ?? ($rec->remarks ?: 'सामान्य (General)') }}
-                            @if($rec->event)
-                                <br><span class="text-xs text-gray-500">({{ adToBs($rec->event->start_date) }} - {{ adToBs($rec->event->end_date) }})</span>
-                            @endif
-                        </td>
-                        <td class="p-3 border text-center">{{ $rec->from_time }} - {{ $rec->to_time }}</td>
-                        <td class="p-3 border text-center">{{ hoursToHm($rec->total_hours) }}</td>
-                        <td class="p-3 border text-center">{{ number_format($rec->total_hours, 2) }}</td>
-                        <td class="p-3 border text-center">{{ number_format($rec->tiffin_amount, 2) }}</td>
-                    </tr>
+    <!-- Filter Section -->
+    <form action="{{ route('reports.index') }}" method="GET" class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">रिपोर्ट प्रकार</label>
+                <select name="group_by" class="w-full border border-slate-300 rounded-lg text-xs p-2.5">
+                    <option value="employee" {{ request('group_by') == 'employee' ? 'selected' : '' }}>कर्मचारी अनुसार</option>
+                    <option value="event" {{ request('group_by') == 'event' ? 'selected' : '' }}>कार्यक्रम अनुसार</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">From Date</label>
+                <input type="date" name="from_date" value="{{ request('from_date') }}" class="w-full border border-slate-300 rounded-lg text-xs p-2.5">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">To Date</label>
+                <input type="date" name="to_date" value="{{ request('to_date') }}" class="w-full border border-slate-300 rounded-lg text-xs p-2.5">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">कर्मचारी (नाम वा पद)</label>
+                <input type="text" name="employee_search" list="employees_list" value="{{ request('employee_search') }}" placeholder="नाम वा पद टाइप गर्नुहोस्..." class="w-full border border-slate-300 rounded-lg text-xs p-2.5">
+                <datalist id="employees_list">
+                    @foreach(\App\Models\Employee::with('position')->get() as $emp)
+                        <option value="{{ $emp->name }} - {{ $emp->position->name ?? 'N/A' }} (कोड: {{ $emp->employee_code }})">
                     @endforeach
-                @endforeach
-            @empty
-                <tr><td colspan="10" class="text-center p-4">कुनै डेटा भेटिएन।</td></tr>
-            @endforelse
-            </tbody>
-            <tfoot>
-            <tr class="bg-gray-800 text-white font-bold">
-                <td colspan="8" class="p-3 border text-right">कुल जम्मा (Grand Total)</td>
-                <td class="p-3 border text-center">{{ number_format($totalHoursDecimalSum, 2) }}</td>
-                <td class="p-3 border text-center">रु {{ number_format($totalAmountSum, 2) }}</td>
-            </tr>
-            </tfoot>
-        </table>
+                </datalist>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">कार्यक्रम (Event)</label>
+                <input type="text" name="event_search" list="events_list" value="{{ request('event_search') }}" placeholder="कार्यक्रमको नाम टाइप गर्नुहोस्..." class="w-full border border-slate-300 rounded-lg text-xs p-2.5">
+                <datalist id="events_list">
+                    @foreach(\App\Models\Event::orderBy('id', 'desc')->get() as $event)
+                        <option value="{{ $event->event_name }}">
+                    @endforeach
+                </datalist>
+            </div>
+            <div class="flex gap-2 items-center">
+                <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-4 py-2.5 rounded-lg transition font-medium flex items-center gap-1 shadow-2xs">
+                    <i class="fas fa-search"></i>
+                    <span>खोज</span>
+                </button>
+                <a href="{{ route('reports.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs px-4 py-2.5 rounded-lg transition font-medium">
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- View Toggle -->
+    <div class="flex gap-2">
+        <button type="button" id="btn-normal-view" onclick="showView('normal')"
+            class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5">
+            <i class="fas fa-file-alt"></i> सामान्य View
+        </button>
+        <button type="button" id="btn-pivot-view" onclick="showView('pivot')"
+            class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5">
+            <i class="fas fa-table"></i> Pivot View
+        </button>
     </div>
-    <div class="mt-4">
-        <a href="{{ route('reports.excel', request()->all()) }}" class="bg-green-600 text-white px-3 py-1 rounded">
-            Excel डाउनलोड
-        </a>
-    </div>
-</div>
 
-<!-- ============================== -->
-<!-- Pivot Table View -->
-<!-- ============================== -->
-<div id="pivot-view" style="display:none;">
-
-    @if(count($pivotColumns) == 0)
-        <div class="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
-            कुनै डेटा भेटिएन।
+    <!-- ============================== -->
+    <!-- सामान्य (Normal) Table View -->
+    <!-- ============================== -->
+    <div id="normal-view">
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-4">
+            <div class="overflow-x-auto">
+                <table class="w-full border-collapse text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                        <tr>
+                            <th class="p-3 text-center w-12">सि.नं.</th>
+                            <th class="p-3">मिति</th>
+                            <th class="p-3">कर्मचारी कोड</th>
+                            <th class="p-3">कर्मचारी</th>
+                            <th class="p-3">पद</th>
+                            <th class="p-3">कार्यक्रम / कारण</th>
+                            <th class="p-3 text-center">समय (From-To)</th>
+                            <th class="p-3 text-center">घण्टा (HH:MM)</th>
+                            <th class="p-3 text-center">घण्टा (Decimal)</th>
+                            <th class="p-3 text-center">खाजा</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @php $sn = 1; @endphp
+                        @forelse($groupedData as $empGroup)
+                            @foreach($empGroup['events'] as $eventGroup)
+                                @foreach($eventGroup['records'] as $rec)
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="p-3 text-center text-slate-500 font-medium">{{ $sn++ }}</td>
+                                    <td class="p-3 text-slate-700">{{ $rec->ot_date }}</td>
+                                    <td class="p-3 font-mono text-slate-700">{{ $empGroup['employee']->employee_code ?? '-' }}</td>
+                                    <td class="p-3 font-semibold text-slate-800">{{ $empGroup['employee']->name ?? 'N/A' }}</td>
+                                    <td class="p-3 text-slate-600">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
+                                    <td class="p-3 text-slate-700">
+                                        {{ $rec->event->event_name ?? ($rec->remarks ?: 'सामान्य (General)') }}
+                                        @if($rec->event)
+                                            <br><span class="text-[11px] text-slate-400">({{ adToBs($rec->event->start_date) }} - {{ adToBs($rec->event->end_date) }})</span>
+                                        @endif
+                                    </td>
+                                    <td class="p-3 text-center font-mono text-slate-700">{{ $rec->from_time }} - {{ $rec->to_time }}</td>
+                                    <td class="p-3 text-center font-mono text-slate-700">{{ hoursToHm($rec->total_hours) }}</td>
+                                    <td class="p-3 text-center font-mono text-slate-700">{{ number_format($rec->total_hours, 2) }}</td>
+                                    <td class="p-3 text-center font-mono text-slate-700">{{ number_format($rec->tiffin_amount, 2) }}</td>
+                                </tr>
+                                @endforeach
+                            @endforeach
+                        @empty
+                            <tr><td colspan="10" class="p-8 text-center text-slate-400">कुनै डेटा भेटिएन।</td></tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-slate-800 text-white font-semibold">
+                            <td colspan="8" class="p-3 text-right">कुल जम्मा (Grand Total)</td>
+                            <td class="p-3 text-center font-mono">{{ number_format($totalHoursDecimalSum, 2) }}</td>
+                            <td class="p-3 text-center font-mono">रु {{ number_format($totalAmountSum, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
-    @else
-        <h3 class="text-lg font-bold text-gray-700 mb-2">कार्यक्रम अनुसार OT Hours Decimal (Programme-wise OT Hours Decimal)</h3>
-        <div class="overflow-x-auto bg-white rounded-lg shadow-sm mb-6">
-            <table class="w-full border-collapse text-sm">
-                <thead>
-                    <tr class="bg-blue-700 text-white">
-                        <th class="p-2 border">सि.नं.</th>
-                        <th class="p-2 border">मिति</th>
-                        <th class="p-2 border">कर्मचारी कोड</th>
-                        <th class="p-2 border">कर्मचारी</th>
-                        <th class="p-2 border">पद</th>
-                        @foreach($pivotColumns as $col)
-                            <th class="p-2 border">{{ $col }}</th>
-                        @endforeach
-                    </tr>
-                </thead>
-                <tbody>
-                    @php $sn = 1; @endphp
-                    @forelse($groupedData as $empId => $empGroup)
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-2 border text-center">{{ $sn++ }}</td>
-                        <td class="p-2 border">-</td>
-                        <td class="p-2 border">{{ $empGroup['employee']->employee_code ?? '-' }}</td>
-                        <td class="p-2 border">{{ $empGroup['employee']->name ?? 'N/A' }}</td>
-                        <td class="p-2 border">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
-                        @foreach($pivotColumns as $col)
-                            <td class="p-2 border text-center">
-                                {{ isset($pivotHours[$empId][$col]) ? number_format($pivotHours[$empId][$col], 2) : '' }}
-                            </td>
-                        @endforeach
-                    </tr>
-                    @empty
-                        <tr><td colspan="{{ 5 + count($pivotColumns) }}" class="text-center p-4">कुनै डेटा भेटिएन।</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <h3 class="text-lg font-bold text-gray-700 mb-2">कार्यक्रम अनुसार खाजा रकम (Programme-wise Lunch Amount)</h3>
-        <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
-            <table class="w-full border-collapse text-sm">
-                <thead>
-                    <tr class="bg-blue-700 text-white">
-                        <th class="p-2 border">सि.नं.</th>
-                        <th class="p-2 border">कर्मचारी कोड</th>
-                        <th class="p-2 border">कर्मचारी</th>
-                        <th class="p-2 border">पद</th>
-                        @foreach($pivotColumns as $col)
-                            <th class="p-2 border">{{ $col }}</th>
-                        @endforeach
-                    </tr>
-                </thead>
-                <tbody>
-                    @php $sn = 1; @endphp
-                    @forelse($groupedData as $empId => $empGroup)
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-2 border text-center">{{ $sn++ }}</td>
-                        <td class="p-2 border">{{ $empGroup['employee']->employee_code ?? '-' }}</td>
-                        <td class="p-2 border">{{ $empGroup['employee']->name ?? 'N/A' }}</td>
-                        <td class="p-2 border">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
-                        @foreach($pivotColumns as $col)
-                            <td class="p-2 border text-center">
-                                {{ isset($pivotLunch[$empId][$col]) ? number_format($pivotLunch[$empId][$col], 2) : '' }}
-                            </td>
-                        @endforeach
-                    </tr>
-                    @empty
-                        <tr><td colspan="{{ 4 + count($pivotColumns) }}" class="text-center p-4">कुनै डेटा भेटिएन।</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-  <div class="mt-4">
-            <a href="{{ route('reports.exportPivot', request()->all()) }}" class="bg-green-600 text-white px-4 py-2 rounded shadow">
-                Excel डाउनलोड (Pivot)
+        <div>
+            <a href="{{ route('reports.excel', request()->all()) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5">
+                <i class="fas fa-file-excel"></i> Excel डाउनलोड
             </a>
         </div>
-    @endif
+    </div>
+
+    <!-- ============================== -->
+    <!-- Pivot Table View -->
+    <!-- ============================== -->
+    <div id="pivot-view" style="display:none;" class="space-y-6">
+        @if(count($pivotColumns) == 0)
+            <div class="bg-white border border-slate-200 rounded-xl p-8 text-center text-slate-400 shadow-sm">
+                कुनै डेटा भेटिएन।
+            </div>
+        @else
+            <div>
+                <h3 class="text-sm font-bold text-slate-800 mb-2">कार्यक्रम अनुसार OT Hours Decimal (Programme-wise OT Hours Decimal)</h3>
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse text-xs text-slate-700">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                                <tr>
+                                    <th class="p-2.5 border-r text-center w-12">सि.नं.</th>
+                                    <th class="p-2.5 border-r text-center">मिति</th>
+                                    <th class="p-2.5 border-r">कर्मचारी कोड</th>
+                                    <th class="p-2.5 border-r">कर्मचारी</th>
+                                    <th class="p-2.5 border-r">पद</th>
+                                    @foreach($pivotColumns as $col)
+                                        <th class="p-2.5 border-r text-center">{{ $col }}</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @php $sn = 1; @endphp
+                                @forelse($groupedData as $empId => $empGroup)
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="p-2.5 border-r text-center text-slate-500">{{ $sn++ }}</td>
+                                    <td class="p-2.5 border-r text-center">-</td>
+                                    <td class="p-2.5 border-r font-mono">{{ $empGroup['employee']->employee_code ?? '-' }}</td>
+                                    <td class="p-2.5 border-r font-semibold text-slate-800">{{ $empGroup['employee']->name ?? 'N/A' }}</td>
+                                    <td class="p-2.5 border-r text-slate-600">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
+                                    @foreach($pivotColumns as $col)
+                                        <td class="p-2.5 border-r text-center font-mono text-slate-700">
+                                            {{ isset($pivotHours[$empId][$col]) ? number_format($pivotHours[$empId][$col], 2) : '' }}
+                                        </td>
+                                    @endforeach
+                                </tr>
+                                @empty
+                                    <tr><td colspan="{{ 5 + count($pivotColumns) }}" class="p-8 text-center text-slate-400">कुनै डेटा भेटिएन।</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold text-slate-800 mb-2">कार्यक्रम अनुसार खाजा रकम (Programme-wise Lunch Amount)</h3>
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse text-xs text-slate-700">
+                            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                                <tr>
+                                    <th class="p-2.5 border-r text-center w-12">सि.नं.</th>
+                                    <th class="p-2.5 border-r">कर्मचारी कोड</th>
+                                    <th class="p-2.5 border-r">कर्मचारी</th>
+                                    <th class="p-2.5 border-r">पद</th>
+                                    @foreach($pivotColumns as $col)
+                                        <th class="p-2.5 border-r text-center">{{ $col }}</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                @php $sn = 1; @endphp
+                                @forelse($groupedData as $empId => $empGroup)
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="p-2.5 border-r text-center text-slate-500">{{ $sn++ }}</td>
+                                    <td class="p-2.5 border-r font-mono">{{ $empGroup['employee']->employee_code ?? '-' }}</td>
+                                    <td class="p-2.5 border-r font-semibold text-slate-800">{{ $empGroup['employee']->name ?? 'N/A' }}</td>
+                                    <td class="p-2.5 border-r text-slate-600">{{ $empGroup['employee']->position->name ?? 'N/A' }}</td>
+                                    @foreach($pivotColumns as $col)
+                                        <td class="p-2.5 border-r text-center font-mono text-slate-700">
+                                            {{ isset($pivotLunch[$empId][$col]) ? number_format($pivotLunch[$empId][$col], 2) : '' }}
+                                        </td>
+                                    @endforeach
+                                </tr>
+                                @empty
+                                    <tr><td colspan="{{ 4 + count($pivotColumns) }}" class="p-8 text-center text-slate-400">कुनै डेटा भेटिएन।</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <a href="{{ route('reports.exportPivot', request()->all()) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5">
+                    <i class="fas fa-file-excel"></i> Excel डाउनलोड (Pivot)
+                </a>
+            </div>
+        @endif
+    </div>
 </div>
 
 <script>
@@ -216,19 +237,14 @@ function showView(view) {
     if (view === 'pivot') {
         normalDiv.style.display = 'none';
         pivotDiv.style.display = 'block';
-        btnPivot.classList.remove('bg-gray-300', 'text-gray-700');
-        btnPivot.classList.add('bg-blue-700', 'text-white');
-        btnNormal.classList.remove('bg-blue-700', 'text-white');
-        btnNormal.classList.add('bg-gray-300', 'text-gray-700');
+        btnPivot.className = "bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5";
+        btnNormal.className = "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5";
     } else {
         pivotDiv.style.display = 'none';
         normalDiv.style.display = 'block';
-        btnNormal.classList.remove('bg-gray-300', 'text-gray-700');
-        btnNormal.classList.add('bg-blue-700', 'text-white');
-        btnPivot.classList.remove('bg-blue-700', 'text-white');
-        btnPivot.classList.add('bg-gray-300', 'text-gray-700');
+        btnNormal.className = "bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5";
+        btnPivot.className = "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg text-xs font-semibold shadow-sm transition inline-flex items-center gap-1.5";
     }
 }
 </script>
-
 @endsection

@@ -1,6 +1,6 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="max-w-2xl mx-auto space-y-6">
 
     <!-- Page Header -->
@@ -11,8 +11,8 @@
 
     <!-- Form Card -->
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <form action="{{ route('events.store') }}" method="POST" class="space-y-4">
-            @csrf
+        <form action="<?php echo e(route('events.store')); ?>" method="POST" class="space-y-4">
+            <?php echo csrf_field(); ?>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="col-span-2">
@@ -50,11 +50,12 @@
                 <label class="block text-xs font-semibold text-slate-600 mb-1">सिफारिस गर्ने</label>
                 <select name="recommender_employee_id" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">
                     <option value="">-- छान्नुहोस् --</option>  
-                    @foreach($employees as $emp)
-                        <option value="{{ $emp->id }}">
-                            {{ $emp->name }} — {{ $emp->position->name ?? '' }}
+                    <?php $__currentLoopData = $employees; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($emp->id); ?>">
+                            <?php echo e($emp->name); ?> — <?php echo e($emp->position->name ?? ''); ?>
+
                         </option>  
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
 
@@ -62,11 +63,11 @@
                 <label class="block text-xs font-semibold text-slate-600 mb-1">स्वीकृत गर्ने (निर्देशनालय प्रमुख)</label>
                 <select name="approver_employee_id" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">
                     <option value="">-- छान्नुहोस् --</option>  
-                    @foreach($employees as $emp)
-                        <option value="{{ $emp->id }}">
-                            {{ $emp->name }} — {{ $emp->position->name ?? '' }} ({{ $emp->department }})
+                    <?php $__currentLoopData = $employees; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($emp->id); ?>">
+                            <?php echo e($emp->name); ?> — <?php echo e($emp->position->name ?? ''); ?> (<?php echo e($emp->department); ?>)
                         </option>  
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
             </div>
             
@@ -86,4 +87,5 @@
         </form>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/events/create.blade.php ENDPATH**/ ?>

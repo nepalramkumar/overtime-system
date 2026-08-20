@@ -1,6 +1,6 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 <div class="max-w-7xl mx-auto space-y-6">
 
     <!-- Page Header & Action Button -->
@@ -9,7 +9,7 @@
             <h2 class="text-2xl font-bold text-slate-800">कर्मचारी व्यवस्थापन</h2>
             <p class="text-xs text-slate-500 mt-1">संस्थाका कर्मचारीहरूको विवरण तथा उनीहरूको पद/विभाग सूची</p>
         </div>
-        <a href="{{ route('employees.create') }}" class="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2.5 rounded-lg shadow-sm transition text-sm">
+        <a href="<?php echo e(route('employees.create')); ?>" class="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-2.5 rounded-lg shadow-sm transition text-sm">
             <i class="fas fa-user-plus"></i>
             <span>नयाँ कर्मचारी थप्नुहोस्</span>
         </a>
@@ -28,26 +28,26 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                    @forelse($employees as $emp)
+                    <?php $__empty_1 = true; $__currentLoopData = $employees; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr class="hover:bg-slate-50/80 transition">
                         <td class="p-4 font-semibold text-slate-800">
-                            {{ $emp->name ?? ($emp->user->name ?? 'N/A') }}  
+                            <?php echo e($emp->name ?? ($emp->user->name ?? 'N/A')); ?>  
                         </td>
                         <td class="p-4 text-slate-600">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700">
-                                {{ $emp->position->name ?? '—' }}  
+                                <?php echo e($emp->position->name ?? '—'); ?>  
                             </span>
                         </td>
-                        <td class="p-4 text-slate-600">{{ $emp->department }}</td>  
+                        <td class="p-4 text-slate-600"><?php echo e($emp->department); ?></td>  
                         <td class="p-4 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-2">
-                                <a href="{{ route('employees.edit', $emp->id) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs font-semibold transition" title="Edit">
+                                <a href="<?php echo e(route('employees.edit', $emp->id)); ?>" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 rounded-lg text-xs font-semibold transition" title="Edit">
                                     <i class="fas fa-edit"></i>
                                     <span>Edit</span>
                                 </a>
-                                <form action="{{ route('employees.destroy', $emp->id) }}" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ?')">  
-                                    @csrf
-                                    @method('DELETE')
+                                <form action="<?php echo e(route('employees.destroy', $emp->id)); ?>" method="POST" class="inline" onsubmit="return confirm('के तपाईं पक्का हुनुहुन्छ?')">  
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('DELETE'); ?>
                                     <button type="submit" class="inline-flex items-center gap-1 px-2.5 py-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg text-xs font-semibold transition" title="Delete">
                                         <i class="fas fa-trash-alt"></i>
                                         <span>Delete</span>
@@ -56,18 +56,19 @@
                             </div>
                         </td>
                     </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="4" class="p-8 text-center text-slate-400">
                             <i class="fas fa-users-slash text-2xl mb-2 block text-slate-300"></i>
                             कुनै पनि कर्मचारीको विवरण फेला परेन।
                         </td>
                     </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
 
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/employees/list.blade.php ENDPATH**/ ?>

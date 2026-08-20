@@ -1,54 +1,53 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="max-w-4xl mx-auto space-y-6">
 
     <!-- Page Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
             <h2 class="text-2xl font-bold text-slate-800">
-                {{ $expense ? '✏️ Repair Expense Edit गर्नुहोस्' : '🔧 नयाँ Repair Expense Entry' }}
+                <?php echo e($expense ? '✏️ Repair Expense Edit गर्नुहोस्' : '🔧 नयाँ Repair Expense Entry'); ?>
+
             </h2>
             <p class="text-xs text-slate-500 mt-1">गाडी मर्मत खर्चको भौचर तथा विवरण प्रविष्टि</p>
         </div>
     </div>
 
     <!-- Flash & Error Alerts -->
-    @if(session('error'))
+    <?php if(session('error')): ?>
         <div class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl shadow-sm text-sm">
             <div class="flex items-center gap-2 font-medium">
                 <i class="fas fa-exclamation-circle text-rose-600"></i>
-                <span>{{ session('error') }}</span>
+                <span><?php echo e(session('error')); ?></span>
             </div>
-            @if(session('vehicle_missing_employee_id'))
+            <?php if(session('vehicle_missing_employee_id')): ?>
                 <div class="mt-2 text-xs">
-                    <a href="{{ route('employees.edit', session('vehicle_missing_employee_id')) }}" target="_blank"
+                    <a href="<?php echo e(route('employees.edit', session('vehicle_missing_employee_id'))); ?>" target="_blank"
                        class="inline-flex items-center gap-1 font-semibold text-rose-700 underline hover:text-rose-900">
                         यहाँबाट Vehicle No थप्नुहोस् →
                     </a>
                 </div>
-            @endif
+            <?php endif; ?>
         </div>
-    @endif
+    <?php endif; ?>
 
-    @if($errors->any())
+    <?php if($errors->any()): ?>
         <div class="bg-rose-50 border border-rose-200 text-rose-800 p-4 rounded-xl shadow-sm text-sm">
             <div class="font-semibold mb-1 text-xs">कृपया तलका त्रुटिहरू सच्याउनुहोस्:</div>
             <ul class="list-disc list-inside space-y-1 text-xs">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
     <!-- Form Container -->
     <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6 sm:p-8">
-        <form action="{{ $expense ? route('repair.expenses.update', $expense->id) : route('repair.expenses.store') }}" method="POST">
-            @csrf
-            @if($expense)
-                @method('PUT')
-            @endif
+        <form action="<?php echo e($expense ? route('repair.expenses.update', $expense->id) : route('repair.expenses.store')); ?>" method="POST">
+            <?php echo csrf_field(); ?>
+            <?php if($expense): ?>
+                <?php echo method_field('PUT'); ?>
+            <?php endif; ?>
 
             <!-- Main Inputs Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -56,26 +55,26 @@
                 <!-- Employee Selection -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">कर्मचारी <span class="text-rose-500">*</span></label>
-                    @if($expense)
+                    <?php if($expense): ?>
                         <div class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-medium text-sm">
-                            {{ $expense->employee->name ?? 'N/A' }} ({{ $expense->employee->employee_code ?? '' }})
+                            <?php echo e($expense->employee->name ?? 'N/A'); ?> (<?php echo e($expense->employee->employee_code ?? ''); ?>)
                         </div>
-                        <input type="hidden" name="employee_id" value="{{ $expense->employee_id }}">
-                    @elseif($canSelectAny)
+                        <input type="hidden" name="employee_id" value="<?php echo e($expense->employee_id); ?>">
+                    <?php elseif($canSelectAny): ?>
                         <select name="employee_id" id="employee_id" class="w-full border border-slate-300 rounded-lg text-sm" required>
                             <option value="">-- कर्मचारी छान्नुहोस् --</option>
-                            @foreach($employees as $emp)
-                                <option value="{{ $emp->id }}" data-vehicle="{{ $emp->vehicle_no }}">
-                                    {{ $emp->name }} ({{ $emp->employee_code }})
+                            <?php $__currentLoopData = $employees; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $emp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($emp->id); ?>" data-vehicle="<?php echo e($emp->vehicle_no); ?>">
+                                    <?php echo e($emp->name); ?> (<?php echo e($emp->employee_code); ?>)
                                 </option>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
-                    @else
+                    <?php else: ?>
                         <div class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-medium text-sm">
-                            {{ $lockedEmployee->name ?? 'N/A' }} ({{ $lockedEmployee->employee_code ?? '' }})
+                            <?php echo e($lockedEmployee->name ?? 'N/A'); ?> (<?php echo e($lockedEmployee->employee_code ?? ''); ?>)
                         </div>
-                        <input type="hidden" name="employee_id" value="{{ $lockedEmployee->id ?? '' }}">
-                    @endif
+                        <input type="hidden" name="employee_id" value="<?php echo e($lockedEmployee->id ?? ''); ?>">
+                    <?php endif; ?>
 
                     <div id="vehicle-warning" class="hidden bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg mt-2 text-xs flex flex-col gap-1">
                         <div class="flex items-center justify-between">
@@ -89,19 +88,20 @@
                 <!-- FY Year Selection -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1.5">FY Year <span class="text-rose-500">*</span></label>
-                    @if($expense)
+                    <?php if($expense): ?>
                         <div class="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-medium text-sm">
-                            {{ $expense->fy_year }}
+                            <?php echo e($expense->fy_year); ?>
+
                         </div>
-                        <input type="hidden" name="fy_year" value="{{ $expense->fy_year }}">
-                    @else
+                        <input type="hidden" name="fy_year" value="<?php echo e($expense->fy_year); ?>">
+                    <?php else: ?>
                         <select name="fy_year" id="fy_year" class="w-full border border-slate-300 rounded-lg text-sm" required>
                             <option value="">-- FY Year छान्नुहोस् --</option>
-                            @foreach($fyOptions as $fy)
-                                <option value="{{ $fy }}">{{ $fy }}</option>
-                            @endforeach
+                            <?php $__currentLoopData = $fyOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $fy): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($fy); ?>"><?php echo e($fy); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
-                    @endif
+                    <?php endif; ?>
                 </div>
 
             </div>
@@ -127,21 +127,21 @@
                         </tr>
                     </thead>
                     <tbody id="rows-body" class="divide-y divide-slate-100">
-                        @php
+                        <?php
                             $existingDates = old('date') ?? ($expense ? $expense->date : [now()->format('Y-m-d')]);
                             $existingDesc  = old('description') ?? ($expense ? $expense->description : ['']);
                             $existingAmt   = old('amount') ?? ($expense ? $expense->amount : ['']);
-                        @endphp
-                        @foreach($existingDates as $i => $d)
+                        ?>
+                        <?php $__currentLoopData = $existingDates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $d): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <tr class="hover:bg-slate-50/50 transition">
                             <td class="p-2">
-                                <input type="date" name="date[]" value="{{ $d }}" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-date" required>
+                                <input type="date" name="date[]" value="<?php echo e($d); ?>" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-date" required>
                             </td>
                             <td class="p-2">
-                                <input type="text" name="description[]" value="{{ $existingDesc[$i] ?? '' }}" placeholder="विवरण लेख्नुहोस्..." class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-desc" required>
+                                <input type="text" name="description[]" value="<?php echo e($existingDesc[$i] ?? ''); ?>" placeholder="विवरण लेख्नुहोस्..." class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-desc" required>
                             </td>
                             <td class="p-2">
-                                <input type="number" step="0.01" name="amount[]" value="{{ $existingAmt[$i] ?? '' }}" placeholder="0.00" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-amount" required>
+                                <input type="number" step="0.01" name="amount[]" value="<?php echo e($existingAmt[$i] ?? ''); ?>" placeholder="0.00" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-amount" required>
                             </td>
                             <td class="p-2 text-center">
                                 <button type="button" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 transition remove-row" title="हटाउनुहोस्">
@@ -149,7 +149,7 @@
                                 </button>
                             </td>
                         </tr>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </tbody>
                 </table>
             </div>
@@ -157,13 +157,13 @@
             <!-- Remarks -->
             <div class="mb-6">
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">कैफियत (Remarks)</label>
-                <textarea name="remarks" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" rows="2" placeholder="आवश्यकता अनुसार कैफियत लेख्नुहोस्...">{{ $expense->remarks ?? '' }}</textarea>
+                <textarea name="remarks" class="w-full p-2.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" rows="2" placeholder="आवश्यकता अनुसार कैफियत लेख्नुहोस्..."><?php echo e($expense->remarks ?? ''); ?></textarea>
             </div>
 
             <!-- Submit Button -->
             <button type="submit" id="submit-btn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-medium p-3 rounded-lg text-xs shadow-sm transition flex items-center justify-center gap-1.5">
                 <i class="fas fa-save"></i>
-                <span>{{ $expense ? 'Update गर्नुहोस्' : 'Submit गर्नुहोस्' }}</span>
+                <span><?php echo e($expense ? 'Update गर्नुहोस्' : 'Submit गर्नुहोस्'); ?></span>
             </button>
         </form>
     </div>
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
             row.className = 'hover:bg-slate-50/50 transition';
             row.innerHTML = `
                 <td class="p-2">
-                    <input type="date" name="date[]" value="{{ now()->format('Y-m-d') }}" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-date" required>
+                    <input type="date" name="date[]" value="<?php echo e(now()->format('Y-m-d')); ?>" class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-date" required>
                 </td>
                 <td class="p-2">
                     <input type="text" name="description[]" placeholder="विवरण लेख्नुहोस्..." class="w-full p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none row-desc" required>
@@ -214,9 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const vehicleWarning = document.getElementById('vehicle-warning');
         const vehicleWarningLink = document.getElementById('vehicle-warning-link');
         const submitBtn = document.getElementById('submit-btn');
-        const isSelfEntry = {{ $canSelectAny ? 'false' : 'true' }};
-        const profileUrl = "{{ route('profile.edit') }}";
-        const employeesEditBaseUrl = "{{ url('/employees') }}";
+        const isSelfEntry = <?php echo e($canSelectAny ? 'false' : 'true'); ?>;
+        const profileUrl = "<?php echo e(route('profile.edit')); ?>";
+        const employeesEditBaseUrl = "<?php echo e(url('/employees')); ?>";
 
         employeeSelect.addEventListener('change', function () {
             const selected = this.options[this.selectedIndex];
@@ -240,4 +240,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/repair/expenses/form.blade.php ENDPATH**/ ?>

@@ -1,6 +1,6 @@
-@extends('layouts.app')
 
-@section('content')
+
+<?php $__env->startSection('content'); ?>
     <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
         <h1 class="text-2xl font-bold mb-6">मास्टर सेटिङ्स (Master Settings)</h1>
 
@@ -19,27 +19,27 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($allowances as $item)
+                <?php $__currentLoopData = $allowances; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <tr>
-                    <td class="border p-2 text-center">{{ $item->min_hours }} - {{ $item->max_hours }} घण्टा </td>
+                    <td class="border p-2 text-center"><?php echo e($item->min_hours); ?> - <?php echo e($item->max_hours); ?> घण्टा </td>
                     <td class="border p-2 text-center">
-                        <form action="{{ route('settings.updateAllowance', $item->id) }}" method="POST" class="inline-flex items-center gap-2">
-                            @csrf @method('PUT')
-                            <input type="number" name="amount" value="{{ $item->amount }}" class="border p-1 w-24 text-center"> 
+                        <form action="<?php echo e(route('settings.updateAllowance', $item->id)); ?>" method="POST" class="inline-flex items-center gap-2">
+                            <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
+                            <input type="number" name="amount" value="<?php echo e($item->amount); ?>" class="border p-1 w-24 text-center"> 
                             <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm">Update</button> 
                         </form>
                     </td>
                     <td class="border p-2 text-center">
-                        <form action="{{ route('settings.destroyAllowance', $item->id) }}" method="POST" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
-                            @csrf
-                            @method('DELETE')
+                        <form action="<?php echo e(route('settings.destroyAllowance', $item->id)); ?>" method="POST" onsubmit="return confirm('के तपाईं पक्का डिलिट गर्न चाहनुहुन्छ?')">
+                            <?php echo csrf_field(); ?>
+                            <?php echo method_field('DELETE'); ?>
                             <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm">
                                 Delete
                             </button> 
                         </form>
                     </td>
                 </tr>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </tbody>
         </table>
     </div>
@@ -47,8 +47,8 @@
     <!-- नयाँ दर थप्ने फर्म -->
     <div class="max-w-4xl mx-auto bg-gray-100 p-4 rounded mb-6 mt-4">
         <h3 class="font-bold mb-2">नयाँ खाजा खर्च दर थप्नुहोस्</h3>
-        <form action="{{ route('settings.storeAllowance') }}" method="POST" class="flex gap-2">
-            @csrf
+        <form action="<?php echo e(route('settings.storeAllowance')); ?>" method="POST" class="flex gap-2">
+            <?php echo csrf_field(); ?>
             <input type="number" name="min_hours" placeholder="न्यूनतम घण्टा" step="any" class="border p-2 w-full" required>  
             <input type="number" name="max_hours" placeholder="अधिकतम घण्टा"  class="border p-2 w-full" required>  
             <input type="number" name="amount" placeholder="रकम (रु.)" class="border p-2 w-full" required>  
@@ -77,4 +77,5 @@
         }
     }
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/settings/snack.blade.php ENDPATH**/ ?>
