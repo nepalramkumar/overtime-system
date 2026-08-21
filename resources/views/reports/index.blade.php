@@ -89,7 +89,7 @@
                             <th class="p-3 text-center">समय (From-To)</th>
                             <th class="p-3 text-center">घण्टा (HH:MM)</th>
                             <th class="p-3 text-center">घण्टा (Decimal)</th>
-                            <th class="p-3 text-center">खाजा</th>
+                            <th class="p-3 text-center">खाजा</th> 
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
