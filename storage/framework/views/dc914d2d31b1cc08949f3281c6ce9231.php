@@ -72,8 +72,12 @@ unset($__errorArgs, $__bag); ?>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                     Date <span class="text-red-500">*</span>
                 </label>
-                <input type="date" name="ot_date" value="<?php echo e(old('ot_date', date('Y-m-d'))); ?>" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" required>
+                <?php echo $__env->make('partials.bs-date-input', [
+                    'name' => 'ot_date',
+                    'value' => old('ot_date', date('Y-m-d')),
+                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer bg-white',
+                    'required' => true,
+                ], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
                 <?php $__errorArgs = ['ot_date'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -177,5 +181,6 @@ unset($__errorArgs, $__bag); ?>
     });
 </script>
 <?php endif; ?>
+<script src="<?php echo e(asset('js/bs-datepicker.js')); ?>"></script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/overtime/create.blade.php ENDPATH**/ ?>

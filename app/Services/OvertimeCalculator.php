@@ -170,4 +170,29 @@ class OvertimeCalculator
         $highestRule = SnackAllowance::orderBy('max_hours', 'desc')->first();
         return $highestRule ? $highestRule->amount : 0;
     }
+public function recalculateTiffinForEvent($eventId, $includeVerified = false)
+{
+    // १. इभेन्टको ताजा tiffin eligibility अवस्था पत्ता लगाउने
+    $event = \App\Models\Event::find($eventId);
+    $isEventTiffinEligible = $event ? (bool)$event->is_tiffin_eligible : false;
+
+    $query = \App\Models\OvertimeRecord::where('event_id', $eventId);
+    
+    if (!$includeVerified) {
+        $query->where('status', '!=', 'Verified');
+    }
+
+    $records = $query->get();
+    $updatedCount = 0;
+
+    foreach ($records as $record) {
+        // २. इभेन्टको eligibility अनुसार tiffin रकम recalculate गर्ने
+        $record->tiffin_amount = $this->calculateTiffin($record->total_hours, $isEventTiffinEligible);
+        
+        $record->save();
+        $updatedCount++;
+    }
+
+    return $updatedCount;
+}
 }

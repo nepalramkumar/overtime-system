@@ -44,13 +44,19 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end">
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">From Date</label>
-                <input type="date" name="from_date" value="<?php echo e(request('from_date')); ?>" 
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                <?php echo $__env->make('partials.bs-date-input', [
+                    'name' => 'from_date',
+                    'value' => request('from_date'),
+                    'class' => 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer bg-white',
+                ], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">To Date</label>
-                <input type="date" name="to_date" value="<?php echo e(request('to_date')); ?>" 
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                <?php echo $__env->make('partials.bs-date-input', [
+                    'name' => 'to_date',
+                    'value' => request('to_date'),
+                    'class' => 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer bg-white',
+                ], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">कार्यक्रम (Event)</label>
@@ -115,7 +121,7 @@
 
                             <!-- Date -->
                             <td class="p-3.5 font-medium text-gray-800 whitespace-nowrap">
-                                <?php echo e($rec->ot_date); ?>
+                                <?php echo e(adToBs($rec->ot_date)); ?>
 
                             </td>
 
@@ -242,5 +248,6 @@
         }
     });
 </script>
+<script src="<?php echo e(asset('js/bs-datepicker.js')); ?>"></script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH D:\xampp\htdocs\overtime-system\resources\views/overtime/my.blade.php ENDPATH**/ ?>

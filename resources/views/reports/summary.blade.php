@@ -23,11 +23,19 @@
         <div class="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">From Date</label>
-                <input type="date" name="from_date" value="{{ request('from_date') }}" class="w-full border border-slate-300 rounded-lg text-xs p-2.5">
+                @include('partials.bs-date-input', [
+                    'name' => 'from_date',
+                    'value' => request('from_date'),
+                    'class' => 'w-full border border-slate-300 rounded-lg text-xs p-2.5 cursor-pointer bg-white',
+                ])
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">To Date</label>
-                <input type="date" name="to_date" value="{{ request('to_date') }}" class="w-full border border-slate-300 rounded-lg text-xs p-2.5">
+                @include('partials.bs-date-input', [
+                    'name' => 'to_date',
+                    'value' => request('to_date'),
+                    'class' => 'w-full border border-slate-300 rounded-lg text-xs p-2.5 cursor-pointer bg-white',
+                ])
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-700 mb-1.5">कर्मचारी (नाम वा पद)</label>
@@ -108,4 +116,5 @@
         </div>
     </div>
 </div>
+<script src="{{ asset('js/bs-datepicker.js') }}"></script>
 @endsection

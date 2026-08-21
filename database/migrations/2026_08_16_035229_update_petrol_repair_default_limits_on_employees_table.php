@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::table('employees', function (Blueprint $table) {
             $table->integer('petrol_quantity_limit')->default(25)->change();
-            $table->integer('repair_expense_limit')->default(8000)->change();
         });
     }
 
@@ -18,7 +17,6 @@ return new class extends Migration
     {
         Schema::table('employees', function (Blueprint $table) {
             $table->integer('petrol_quantity_limit')->default(20)->change();
-            $table->integer('repair_expense_limit')->default(0)->change();
         });
     }
 };

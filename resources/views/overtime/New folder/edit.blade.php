@@ -101,12 +101,8 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                     Date <span class="text-red-500">*</span>
                 </label>
-                @include('partials.bs-date-input', [
-                    'name' => 'ot_date',
-                    'value' => old('ot_date', $record->ot_date),
-                    'class' => 'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm cursor-pointer bg-white',
-                    'required' => true,
-                ])
+                <input type="date" name="ot_date" value="{{ old('ot_date', $record->ot_date) }}" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm" required>
                 @error('ot_date')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror
@@ -187,5 +183,4 @@
     });
 </script>
 @endif
-<script src="{{ asset('js/bs-datepicker.js') }}"></script>
 @endsection

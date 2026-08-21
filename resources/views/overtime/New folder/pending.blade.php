@@ -30,19 +30,11 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">From Date</label>
-                @include('partials.bs-date-input', [
-                    'name' => 'from_date',
-                    'value' => request('from_date'),
-                    'class' => 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer bg-white',
-                ])
+                <input type="date" name="from_date" value="{{ request('from_date') }}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">To Date</label>
-                @include('partials.bs-date-input', [
-                    'name' => 'to_date',
-                    'value' => request('to_date'),
-                    'class' => 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer bg-white',
-                ])
+                <input type="date" name="to_date" value="{{ request('to_date') }}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">कर्मचारी</label>
@@ -195,5 +187,4 @@
         }
     });
 </script>
-<script src="{{ asset('js/bs-datepicker.js') }}"></script>
 @endsection

@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\OvertimeExport;
 use App\Services\OvertimeWordService;
+use App\Support\EmployeeSorter;
 
 class OvertimeController extends Controller
 {
@@ -156,19 +157,13 @@ return redirect()->route('overtime.my')
 {
     try {
         $oldRecord = OvertimeRecord::findOrFail($id);
+        $eventId = $request->event_id;
 
-        if (!$this->canEnterForAnyone() && (int) $oldRecord->employee_id !== (int) auth()->user()->employee_id) {
-            abort(403, 'तपाईं यो record edit गर्न पाउनुहुन्न।');
-        }
-
-        if ($oldRecord->status === 'Verified') {
-            return redirect()->back()->with('error', 'यो record Verified छ, edit गर्न पहिले Unverify गर्नुपर्छ।');
-        }
-
-        $wasRejected = $oldRecord->status === 'Rejected';
-
+        // १. पुरानो रेकर्ड डिलिट र नयाँ बनाउने (तपाईंको पुरानो logic)
         OvertimeRecord::where('ot_date', $oldRecord->ot_date)
                       ->where('employee_id', $oldRecord->employee_id)
+                      ->where('event_id', $oldRecord->event_id)
+                      ->where('purpose_id', $oldRecord->purpose_id)
                       ->delete();
 
         $employee = Employee::findOrFail($request->employee_id);
@@ -181,22 +176,22 @@ return redirect()->route('overtime.my')
             'remarks'    => $request->remarks,
             'purpose_id' => $request->purpose_id,
         ];
+        $this->calculator->calculateAndSave($additionalData, $employee);
 
-        $newRecord = $this->calculator->calculateAndSave($additionalData, $employee);
+        // २. अब Tiffin recalculate गर्ने
+        $updatedCount = $this->calculator->recalculateTiffinForEvent($eventId, true);
+        
+        // ३. Verified रेकर्डहरू चेक गर्ने
+        $verifiedCount = OvertimeRecord::where('event_id', $eventId)->where('status', 'Verified')->count();
 
-        // Rejected थियो भने, edit पछि फेरि Pending बनाउने (rejection info खाली गर्ने)
-        if ($wasRejected) {
-            OvertimeRecord::where('ot_date', $request->ot_date)
-                ->where('employee_id', $request->employee_id)
-                ->update([
-                    'status' => 'Pending',
-                    'rejection_reason' => null,
-                    'rejected_by' => null,
-                    'rejected_at' => null,
-                ]);
+        $message = "{$updatedCount} वटा OT record को खाजा रकम पुनः गणना गरियो।";
+        
+        if ($verifiedCount > 0) {
+            $message .= " (चेतावनी: {$verifiedCount} वटा Verified रेकर्डहरू अपडेट गरिएका छैनन्।)";
         }
 
-        return redirect()->route('overtime.list')->with('success', 'ओभरटाइम सफलतापूर्वक अपडेट गरियो।');
+        return redirect()->route('overtime.list')->with('success', $message);
+
     } catch (Exception $e) {
         return redirect()->back()->with('error', 'अपडेट गर्दा त्रुटि भयो: ' . $e->getMessage());
     }

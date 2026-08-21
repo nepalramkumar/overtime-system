@@ -74,10 +74,10 @@
                             <td class="p-4 align-top text-xs text-slate-600"><?php echo e($event->department); ?></td>  
 
                             <td class="p-4 align-top text-xs text-slate-600 whitespace-nowrap">
-                                <?php echo e(\Carbon\Carbon::parse($event->start_date)->format('Y-m-d')); ?>
+                                <?php echo e(adToBs($event->start_date)); ?>
 
                                 <span class="text-slate-300 mx-1">→</span>
-                                <?php echo e(\Carbon\Carbon::parse($event->end_date)->format('Y-m-d')); ?>  
+                                <?php echo e(adToBs($event->end_date)); ?>  
                             </td>
 
                             <td class="p-4 align-top">

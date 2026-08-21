@@ -28,10 +28,10 @@
              class="fixed inset-0 bg-slate-900/80 z-40 lg:hidden" x-cloak></div>
 
         <!-- Sidebar -->
-        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-800 text-slate-100 flex-shrink-0 shadow-xl flex flex-col justify-between transform transition-transform duration-300 lg:static lg:translate-x-0"
-               :class="mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-800 text-slate-100 flex-shrink-0 shadow-xl flex flex-col h-screen transform transition-transform duration-300 lg:static lg:translate-x-0"
+       :class="mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'">
 
-            <div>
+              <div class="flex-1 flex flex-col min-h-0">
                 <!-- Logo / Brand -->
                 <div class="p-5 border-b border-slate-700/70 flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -50,10 +50,10 @@
                 </div>
 
                 <!-- Navigation Links -->
-                <nav class="p-4 overflow-y-auto max-h-[calc(100vh-140px)] space-y-4">
+                <nav class="p-4 overflow-y-auto flex-1 space-y-4">
 
                     <!-- Dashboard -->
-                    <div>
+                      <div class="flex-1 flex flex-col min-h-0">
                         <ul class="space-y-1">
                             <li>
                                 <a href="{{ route('dashboard') }}"
@@ -82,6 +82,15 @@
                                     <span>OT Entry</span>
                                 </a>
                             </li>
+                          <li>
+    <a href="{{ route('events.list') }}"
+       class="flex items-center gap-3 px-3 py-2 rounded-lg transition duration-150 text-sm font-medium
+       {{ request()->routeIs('events.list') ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:bg-slate-700/70 hover:text-white' }}">
+        <i class="fas fa-calendar-check w-4 text-center"></i>
+        <span>Event OT Entry</span>
+    </a>
+</li>
+                            
                             <li>
                                 <a href="{{ route('overtime.my') }}"
                                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition duration-150 text-sm font-medium
@@ -342,7 +351,7 @@
 
                     <!-- Administration Section -->
                     @if(auth()->user()->role === 'admin')
-                    <div>
+                      <div class="flex-1 flex flex-col min-h-0">
                         <h3 class="px-3 mb-2 text-xs uppercase text-slate-400 font-semibold tracking-wider">
                             Administration
                         </h3>

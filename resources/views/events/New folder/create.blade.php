@@ -32,20 +32,12 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">सुरु हुने मिति</label>
-                    @include('partials.bs-date-input', [
-                        'name' => 'start_date',
-                        'value' => old('start_date'),
-                        'class' => 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer bg-white',
-                    ])
+                    <input type="date" name="start_date" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">  
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">सकिने मिति</label>
-                    @include('partials.bs-date-input', [
-                        'name' => 'end_date',
-                        'value' => old('end_date'),
-                        'class' => 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none cursor-pointer bg-white',
-                    ])
+                    <input type="date" name="end_date" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none">  
                 </div>
 
                 <div>
@@ -114,5 +106,4 @@
         });
     });
 </script>
-<script src="{{ asset('js/bs-datepicker.js') }}"></script>
 @endsection

@@ -30,11 +30,19 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">From Date</label>
-                <input type="date" name="from_date" value="{{ request('from_date') }}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                @include('partials.bs-date-input', [
+                    'name' => 'from_date',
+                    'value' => request('from_date'),
+                    'class' => 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer bg-white',
+                ])
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">To Date</label>
-                <input type="date" name="to_date" value="{{ request('to_date') }}" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+                @include('partials.bs-date-input', [
+                    'name' => 'to_date',
+                    'value' => request('to_date'),
+                    'class' => 'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none cursor-pointer bg-white',
+                ])
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-600 mb-1">कर्मचारी</label>
@@ -96,7 +104,7 @@
                             <td class="p-3.5 font-mono text-xs text-slate-600">{{ $rec->employee->employee_code ?? '-' }}</td>
                             <td class="p-3.5 font-semibold text-slate-800">{{ $rec->employee->name ?? 'N/A' }}</td>
                             <td class="p-3.5 text-slate-600">{{ $rec->employee->position->name ?? 'N/A' }}</td>
-                            <td class="p-3.5 font-medium text-slate-800 whitespace-nowrap">{{ $rec->ot_date }}</td>
+                            <td class="p-3.5 font-medium text-slate-800 whitespace-nowrap">{{ adToBs($rec->ot_date) }}</td>
                             <td class="p-3.5 text-center text-slate-600 whitespace-nowrap text-xs">{{ $rec->from_time }} - {{ $rec->to_time }}</td>
                             <td class="p-3.5 text-center">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
@@ -183,4 +191,5 @@
         }
     });
 </script>
+<script src="{{ asset('js/bs-datepicker.js') }}"></script>
 @endsection

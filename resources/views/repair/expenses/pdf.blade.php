@@ -24,7 +24,7 @@
 
         .bill-header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .bill-header h2 {
@@ -32,9 +32,7 @@
         }
 
         .bill-box {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
+            width: 40%;
         }
 
         .bill-info {
@@ -84,7 +82,7 @@
         <div class="bill-info">
             <div class="bill-info-item">
                 <strong>Name:</strong>
-                <span>{{ $employee->name ?? 'N/A' }} ({{ $employee->vehicle_no ?? '' }})</span>
+                <span>{{ $employee->name ?? 'N/A' }}({{ $employee->vehicle_no ?? '' }})</span>
             </div>
         </div>
 
